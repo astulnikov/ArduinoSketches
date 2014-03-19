@@ -2,7 +2,7 @@
 
 const char CHECK_SYMBOL = 'c';
 const char APPROVE_SYMBOL=  'a';
-const int PAUSE_DELAY = 5;
+const int PAUSE_DELAY = 10;
 const int READ_MESSAGE_DELAY = 10;
 const int WAIT_FOR_APPROVE_DELAY = 100;
 const int ATTEMPTS_TOTAL = 3; 
@@ -41,9 +41,9 @@ void readMessage() {
   String approveString = String(APPROVE_SYMBOL);
   String approveMessage = String(checkString + approveString);
   sendMessage(approveMessage);
-  delay(PAUSE_DELAY);
-  message = CHECK_SYMBOL + message;
-  safeSend(message);
+//  delay(PAUSE_DELAY);
+//  message = CHECK_SYMBOL + message;
+//  safeSend(message);
 }
 
 void sendMessage(String message){
