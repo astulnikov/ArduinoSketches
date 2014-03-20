@@ -2,8 +2,8 @@
 
 const char CHECK_SYMBOL = 'c';
 const char APPROVE_SYMBOL=  'a';
-const int PAUSE_DELAY = 10;
-const int READ_MESSAGE_DELAY = 10;
+const int PAUSE_DELAY = 5;
+const int READ_MESSAGE_DELAY = 5;
 const int WAIT_FOR_APPROVE_DELAY = 100;
 const int ATTEMPTS_TOTAL = 3; 
 const int LED = 13; 
