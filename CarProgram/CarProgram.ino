@@ -36,7 +36,7 @@ void setup() {
   digitalWrite(R_A_IB, LOW);
 
   //servo init
-  myServo.attach(9); 
+  myServo.attach(8); 
 } 
 
 
