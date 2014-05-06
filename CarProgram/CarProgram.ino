@@ -13,11 +13,13 @@ const int PAUSE_DELAY = 5;
 const int READ_MESSAGE_DELAY = 5;
 const int WAIT_FOR_APPROVE_DELAY = 100;
 const int ATTEMPTS_TOTAL = 3; 
+
+const int SERVO_PIN = 9;
 const int LED = 13; 
 
 //Motor driber section
-int R_A_IA = 9; // A-IA
-int R_A_IB = 10; // A-IB
+int R_A_IA = 5; // A-IA
+int R_A_IB = 6; // A-IB
 
 Servo myServo;  
 
@@ -36,7 +38,7 @@ void setup() {
   digitalWrite(R_A_IB, LOW);
 
   //servo init
-  myServo.attach(8); 
+  myServo.attach(SERVO_PIN); 
 } 
 
 
@@ -63,17 +65,18 @@ void readMessage() {
   String approveString = String(APPROVE_SYMBOL);
   String approveMessage = String(checkString + approveString);
   sendMessage(approveMessage);
-  delay(PAUSE_DELAY);
-  message = CHECK_SYMBOL + message;
-  safeSend(message);
+//  delay(PAUSE_DELAY);
+//  message = CHECK_SYMBOL + message;
+//  safeSend(message);
 }
 
 void chooseAction(String data) {
   if(data.charAt(0) == STEERING_SYMBOL){
-    myServo.write(data.toInt());
+    String angle = data.substring(1);
+    myServo.write(angle.toInt());
   } 
   else{
-
+    driveControl(data.charAt(1));
   }
 }
 
@@ -90,13 +93,13 @@ void driveControl(char command){
 }
 
 void runForward(){
-  digitalWrite(R_A_IA, HIGH);
+  analogWrite(R_A_IA, 200);
   digitalWrite(R_A_IB, LOW);
 }
 
 void runBack(){
-  digitalWrite(R_A_IA, HIGH);
-  digitalWrite(R_A_IB, LOW);
+  analogWrite(R_A_IA, 70);
+  digitalWrite(R_A_IB, HIGH);
 }
 
 void stopRun(){
