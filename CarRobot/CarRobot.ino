@@ -13,21 +13,28 @@ const int PAUSE_DELAY = 5;
 const int READ_MESSAGE_DELAY = 5;
 const int WAIT_FOR_APPROVE_DELAY = 100;
 const int ATTEMPTS_TOTAL = 3; 
+const int STOP_DISTANCE = 5;
 
 const int START_ANGLE = 5; 
 
 const int SERVO_PIN = 9;
 const int LED = 13; 
 
+//distance sensor
+const int trigPin = 10;
+const int echoPin = 11;
+
 //Motor driber section
-int R_A_IA = 5; // A-IA
-int R_A_IB = 6; // A-IB
+const int R_A_IA = 5; // A-IA
+const int R_A_IB = 6; // A-IB
 
 Servo myServo;  
 
 char incomingByte;
 int attemptCount;
 String bufferString = "";
+
+boolean isRobotMode;
 
 void setup() { 
   Serial.begin(9600);
@@ -52,6 +59,7 @@ void loop() {
       readMessage();
     }
   }
+  reactOnDistance(getDistance());
 } 
 
 void readMessage() {
@@ -66,8 +74,8 @@ void readMessage() {
   String checkString = String(CHECK_SYMBOL);
   String approveString = String(APPROVE_SYMBOL);
   String approveMessage = String(checkString + approveString);
-//  sendMessage(approveMessage);
-//  delay(PAUSE_DELAY);
+  //  sendMessage(approveMessage);
+  //  delay(PAUSE_DELAY);
   message = CHECK_SYMBOL + message;
   sendMessage(message);
 }
@@ -144,7 +152,30 @@ boolean readApproveMessage(){
   return false;
 }
 
+long getEchoTiming() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(5);
+  digitalWrite(trigPin, LOW);
+  long duration = pulseIn(echoPin,HIGH);
+  return duration;
+} 
 
+long getDistance() {
+  long distacne_cm = getEchoTiming()/29/2;
+  return distacne_cm;
+}
+
+void setRobotMode(boolean robotMode) {
+  isRobotMode = robotMode;
+}
+
+void reactOnDistance(int distance) {
+  if(distance < STOP_DISTANCE) {
+    stopRun();
+  }
+}
 
 
 
