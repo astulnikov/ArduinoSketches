@@ -15,14 +15,14 @@ const int WAIT_FOR_APPROVE_DELAY = 100;
 const int ATTEMPTS_TOTAL = 3; 
 const int STOP_DISTANCE = 5;
 
-const int START_ANGLE = 5; 
+const int START_ANGLE = 0; 
 
 const int SERVO_PIN = 9;
 const int LED = 13; 
 
 //distance sensor
-const int trigPin = 10;
-const int echoPin = 11;
+const int trigPin = 11;
+const int echoPin = 12;
 
 //Motor driber section
 const int R_A_IA = 5; // A-IA
@@ -47,7 +47,11 @@ void setup() {
   digitalWrite(R_A_IB, LOW);
 
   //servo init
-  myServo.attach(SERVO_PIN); 
+  myServo.attach(SERVO_PIN);
+
+  //distance sensor init
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT); 
 } 
 
 
@@ -156,7 +160,7 @@ long getEchoTiming() {
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
-  delayMicroseconds(5);
+  delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
   long duration = pulseIn(echoPin,HIGH);
   return duration;
@@ -164,6 +168,9 @@ long getEchoTiming() {
 
 long getDistance() {
   long distacne_cm = getEchoTiming()/29/2;
+  String message = String(distacne_cm);
+  message = CHECK_SYMBOL + message;
+  sendMessage(message);
   return distacne_cm;
 }
 
@@ -176,6 +183,7 @@ void reactOnDistance(int distance) {
     stopRun();
   }
 }
+
 
 
 
