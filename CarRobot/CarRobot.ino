@@ -18,6 +18,7 @@ const int STOP_DISTANCE = 10; //In centimeters
 const int FREE_DISTANCE = 110; //In centimeters
 
 const int ZERO_ANGLE = 90; 
+const int MAX_ANGLE = 26; 
 const int START_ANGLE = 0; 
 
 const int SERVO_PIN = 9;
@@ -96,14 +97,17 @@ void chooseAction(String data) {
   } 
   else if(data.charAt(0) == DRIVE_SYMBOL){
     driveControl(data.charAt(1));
-  } else if(data.charAt(0) == ROBOT_SYMBOL) {
+  } 
+  else if(data.charAt(0) == ROBOT_SYMBOL) {
     setRobotMode(true);
     //TODO begin robot program
   }
 }
 
 void turnToAngle(int angle) { 
-  myServo.write(angle);
+  if(myServo.read() != angle) {
+    myServo.write(angle);
+  }
 }
 
 void driveControl(char command){
@@ -193,17 +197,16 @@ void setRobotMode(boolean robotMode) {
 void reactOnDistance(int distance) {
   if(distance < STOP_DISTANCE) {
     stopRun();
+  } 
+  else if(distance < FREE_DISTANCE) {
+    float degreePerCentimeter = (float) MAX_ANGLE / (float) FREE_DISTANCE;
+    int steeringAngle = ZERO_ANGLE + MAX_ANGLE - degreePerCentimeter * distance;
+    turnToAngle(steeringAngle);  
+  } 
+  else {
+    turnToAngle(ZERO_ANGLE);  
   }
-  int degreePerCentimeter = (FREE_DISTANCE - STOP_DISTANCE) / 90;
-  int steeringAngle = 180 - degreePerCentimeter * distance;
-  turnToAngle(steeringAngle);
 }
-
-
-
-
-
-
 
 
 

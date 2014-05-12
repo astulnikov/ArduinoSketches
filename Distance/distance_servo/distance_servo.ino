@@ -1,10 +1,10 @@
 #include <Servo.h> 
 
-Servo myservo;
+Servo myServo;
 
 int ledPin = 13;
-int trigPin = 10;
-int echoPin = 11;
+int trigPin = 11;
+int echoPin = 12;
 
 long distance;
 int count;
@@ -13,16 +13,16 @@ int pos;
 void setup()  {
   pinMode(trigPin,OUTPUT);
   pinMode(echoPin,INPUT);
-  myservo.attach(9);
+  myServo.attach(9);
   Serial.begin(9600);
 }
 
 void loop()  { 
   distance = getDistance();
   Serial.print(distance);
-  Serial.print(", ");
+  Serial.print(", ");  
   ledBlink(distance);
-  rotateServo(distance);
+  reactOnDistance(distance);
 } 
 
 void ledBlink(int time) {
@@ -38,10 +38,10 @@ void rotateServo(int angle) {
   pos = pos / 2;
   if(count > 5) {
     if(angle <= 180) {
-      myservo.write(angle); 
+      myServo.write(angle); 
     } 
     else {
-      myservo.write(1); 
+      myServo.write(1); 
     }
     count = 0;
   }
@@ -61,6 +61,23 @@ long getDistance() {
   long distacne_cm = getEchoTiming()/29/2;
   return distacne_cm;
 }
+
+void reactOnDistance(int distance) {
+  if(distance < 110) {
+    float degreePerCentimeter = 26.0 / 110.0;
+    Serial.print(degreePerCentimeter);
+    Serial.print(", "); 
+    int steeringAngle = 90 + 26 - degreePerCentimeter * distance;
+    myServo.write(steeringAngle);
+    Serial.print(steeringAngle);
+    Serial.println(", ");  
+  } 
+  else {
+    myServo.write(90);  
+  }
+}
+
+
 
 
 
