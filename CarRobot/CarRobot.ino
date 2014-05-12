@@ -14,8 +14,10 @@ const int PAUSE_DELAY = 5;
 const int READ_MESSAGE_DELAY = 5;
 const int WAIT_FOR_APPROVE_DELAY = 100;
 const int ATTEMPTS_TOTAL = 3; 
-const int STOP_DISTANCE = 10; //In centimeters
-const int FREE_DISTANCE = 110; //In centimeters
+const int STOP_DISTANCE = 20; //In centimeters
+const int FREE_DISTANCE = 200; //In centimeters
+
+const int DISTANCE_DELAY = 150;
 
 const int ZERO_ANGLE = 90; 
 const int MAX_ANGLE = 26; 
@@ -37,6 +39,8 @@ Servo myServo;
 char incomingByte;
 int attemptCount;
 String bufferString = "";
+
+unsigned long time;
 
 boolean isRobotMode = true; //Only for tests
 
@@ -67,7 +71,8 @@ void loop() {
       readMessage();
     }
   }
-  if(isRobotMode) {
+  if(isRobotMode && time < (millis() - DISTANCE_DELAY)) {
+    time = millis();
     reactOnDistance(getDistance());
   }
 } 
@@ -202,10 +207,17 @@ void reactOnDistance(int distance) {
     float degreePerCentimeter = (float) MAX_ANGLE / (float) FREE_DISTANCE;
     int steeringAngle = ZERO_ANGLE + MAX_ANGLE - degreePerCentimeter * distance;
     turnToAngle(steeringAngle);  
+    runF();
   } 
   else {
     turnToAngle(ZERO_ANGLE);  
+    runF();
   }
+}
+
+void runF(){
+  analogWrite(R_A_IA, 150);
+  digitalWrite(R_A_IB, LOW);
 }
 
 
