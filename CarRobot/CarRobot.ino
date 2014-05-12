@@ -4,6 +4,7 @@ const char CHECK_SYMBOL = 'c';
 const char APPROVE_SYMBOL= 'a';
 const char STEERING_SYMBOL= 's';
 const char DRIVE_SYMBOL= 'd';
+const char ROBOT_SYMBOL= 'r';
 
 const char RUN_FORWARD_SYMBOL= '1';
 const char RUN_BACK_SYMBOL= '2';
@@ -13,8 +14,10 @@ const int PAUSE_DELAY = 5;
 const int READ_MESSAGE_DELAY = 5;
 const int WAIT_FOR_APPROVE_DELAY = 100;
 const int ATTEMPTS_TOTAL = 3; 
-const int STOP_DISTANCE = 5;
+const int STOP_DISTANCE = 10; //In centimeters
+const int FREE_DISTANCE = 110; //In centimeters
 
+const int ZERO_ANGLE = 90; 
 const int START_ANGLE = 0; 
 
 const int SERVO_PIN = 9;
@@ -24,7 +27,7 @@ const int LED = 13;
 const int trigPin = 11;
 const int echoPin = 12;
 
-//Motor driber section
+//Motor driver section
 const int R_A_IA = 5; // A-IA
 const int R_A_IB = 6; // A-IB
 
@@ -34,7 +37,7 @@ char incomingByte;
 int attemptCount;
 String bufferString = "";
 
-boolean isRobotMode;
+boolean isRobotMode = true; //Only for tests
 
 void setup() { 
   Serial.begin(9600);
@@ -63,7 +66,9 @@ void loop() {
       readMessage();
     }
   }
-  reactOnDistance(getDistance());
+  if(isRobotMode) {
+    reactOnDistance(getDistance());
+  }
 } 
 
 void readMessage() {
@@ -87,11 +92,18 @@ void readMessage() {
 void chooseAction(String data) {
   if(data.charAt(0) == STEERING_SYMBOL){
     String angle = data.substring(1);
-    myServo.write(angle.toInt() + START_ANGLE);
+    turnToAngle(angle.toInt() + START_ANGLE);
   } 
-  else{
+  else if(data.charAt(0) == DRIVE_SYMBOL){
     driveControl(data.charAt(1));
+  } else if(data.charAt(0) == ROBOT_SYMBOL) {
+    setRobotMode(true);
+    //TODO begin robot program
   }
+}
+
+void turnToAngle(int angle) { 
+  myServo.write(angle);
 }
 
 void driveControl(char command){
@@ -182,6 +194,9 @@ void reactOnDistance(int distance) {
   if(distance < STOP_DISTANCE) {
     stopRun();
   }
+  int degreePerCentimeter = (FREE_DISTANCE - STOP_DISTANCE) / 90;
+  int steeringAngle = 180 - degreePerCentimeter * distance;
+  turnToAngle(steeringAngle);
 }
 
 
