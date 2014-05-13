@@ -1,4 +1,5 @@
 #include <Servo.h> 
+#include "Ultrasonic.h" 
 
 const char CHECK_SYMBOL = 'c';
 const char APPROVE_SYMBOL= 'a';
@@ -33,14 +34,15 @@ const int SERVO_PIN = 9;
 const int LED = 13; 
 
 //distance sensor
-const int trigPin = 11;
-const int echoPin = 12;
+const int TRIG_PIN = 11;
+const int ECHO_PIN = 12;
 
 //Motor driver section
 const int R_A_IA = 5; // A-IA
 const int R_A_IB = 6; // A-IB
 
 Servo myServo;  
+Ultrasonic ultrasonic(TRIG_PIN, ECHO_PIN);
 
 char incomingByte;
 int attemptCount;
@@ -63,10 +65,6 @@ void setup() {
 
   //servo init
   myServo.attach(SERVO_PIN);
-
-  //distance sensor init
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT); 
 } 
 
 
@@ -80,7 +78,7 @@ void loop() {
   }
   if(mIsRobotMode && time < (millis() - DISTANCE_DELAY)) {
     time = millis();
-    int currentDistance = getDistance();
+    int currentDistance = ultrasonic.Ranging(CM);
     if(currentDistance < MOTOR_START_DISTANCE ||
       (currentDistance > MOTOR_START_HIGH_DISTANCE &&
       currentDistance < MOTOR_RUN_DISTANCE) ||
@@ -191,24 +189,6 @@ boolean readApproveMessage(){
     }
   }
   return false;
-}
-
-long getEchoTiming() {
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-  long duration = pulseIn(echoPin,HIGH);
-  return duration;
-} 
-
-long getDistance() {
-  long distacne_cm = getEchoTiming()/29/2;
-  //  String message = String(distacne_cm);
-  //  message = CHECK_SYMBOL + message;
-  //  sendMessage(message);
-  return distacne_cm;
 }
 
 void setRobotMode(boolean robotMode) {
