@@ -14,8 +14,14 @@ const int PAUSE_DELAY = 5;
 const int READ_MESSAGE_DELAY = 5;
 const int WAIT_FOR_APPROVE_DELAY = 100;
 const int ATTEMPTS_TOTAL = 3; 
-const int STOP_DISTANCE = 20; //In centimeters
+const int STOP_DISTANCE = 30; //In centimeters
 const int FREE_DISTANCE = 200; //In centimeters
+
+//Motor sounds...
+const int MOTOR_START_DISTANCE = 20;
+const int MOTOR_START_HIGH_DISTANCE = 30;
+const int MOTOR_RUN_DISTANCE = 50;
+const int MOTOR_RUN_HIGH_DISTANCE = 60;
 
 const int DISTANCE_DELAY = 150;
 
@@ -41,8 +47,9 @@ int attemptCount;
 String bufferString = "";
 
 unsigned long time;
-
-boolean isRobotMode = true; //Only for tests
+int mDistance;
+boolean mIsRobotMode = true; //Only for tests
+boolean mIsRunning;
 
 void setup() { 
   Serial.begin(9600);
@@ -71,9 +78,17 @@ void loop() {
       readMessage();
     }
   }
-  if(isRobotMode && time < (millis() - DISTANCE_DELAY)) {
+  if(mIsRobotMode && time < (millis() - DISTANCE_DELAY)) {
     time = millis();
-    reactOnDistance(getDistance());
+    int currentDistance = getDistance();
+    if(currentDistance < MOTOR_START_DISTANCE ||
+      (currentDistance > MOTOR_START_HIGH_DISTANCE &&
+      currentDistance < MOTOR_RUN_DISTANCE) ||
+      currentDistance > MOTOR_RUN_HIGH_DISTANCE) {
+      mDistance = currentDistance;
+      Serial.println(mDistance);
+      reactOnDistance(mDistance);
+    }
   }
 } 
 
@@ -104,7 +119,7 @@ void chooseAction(String data) {
     driveControl(data.charAt(1));
   } 
   else if(data.charAt(0) == ROBOT_SYMBOL) {
-    setRobotMode(true);
+    setRobotMode(!mIsRobotMode);
     //TODO begin robot program
   }
 }
@@ -140,6 +155,7 @@ void runBack(){
 void stopRun(){
   digitalWrite(R_A_IA, LOW);
   digitalWrite(R_A_IB, LOW);
+  mIsRunning = false;
 }
 
 void sendMessage(String message){
@@ -189,19 +205,25 @@ long getEchoTiming() {
 
 long getDistance() {
   long distacne_cm = getEchoTiming()/29/2;
-  String message = String(distacne_cm);
-  message = CHECK_SYMBOL + message;
-  sendMessage(message);
+  //  String message = String(distacne_cm);
+  //  message = CHECK_SYMBOL + message;
+  //  sendMessage(message);
   return distacne_cm;
 }
 
 void setRobotMode(boolean robotMode) {
-  isRobotMode = robotMode;
+  mIsRobotMode = robotMode;
+  if(robotMode) {
+    runF();
+  } 
+  else {
+    stopF(); 
+  }
 }
 
 void reactOnDistance(int distance) {
   if(distance < STOP_DISTANCE) {
-    stopRun();
+    stopF();
   } 
   else if(distance < FREE_DISTANCE) {
     float degreePerCentimeter = (float) MAX_ANGLE / (float) FREE_DISTANCE;
@@ -216,9 +238,38 @@ void reactOnDistance(int distance) {
 }
 
 void runF(){
-  analogWrite(R_A_IA, 150);
-  digitalWrite(R_A_IB, LOW);
+  if(!mIsRunning) {
+    mIsRunning = true;
+    analogWrite(R_A_IA, 170);
+    digitalWrite(R_A_IB, LOW);
+  }
 }
+
+void stopF(){
+  if(mIsRunning) {
+    digitalWrite(R_A_IA, LOW);
+    digitalWrite(R_A_IB, LOW);
+
+    delay(10);
+
+    analogWrite(R_A_IA, 70);
+    digitalWrite(R_A_IB, HIGH);
+
+    delay(70);
+  }
+
+  digitalWrite(R_A_IA, LOW);
+  digitalWrite(R_A_IB, LOW);
+  mIsRunning = false;
+}
+
+
+
+
+
+
+
+
 
 
 

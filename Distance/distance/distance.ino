@@ -1,6 +1,6 @@
 int ledPin = 13;
-int trigPin = 10;
-int echoPin = 11;
+int trigPin = 11;
+int echoPin = 12;
 
 long distance;
 int ledLevel; 
@@ -16,6 +16,7 @@ void loop()  {
   Serial.print(distance);
   Serial.print(", ");
   ledBlink(distance);
+  delay(100);
 } 
 
 void ledBlink(int time) {
