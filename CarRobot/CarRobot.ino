@@ -48,8 +48,7 @@ char incomingByte;
 int attemptCount;
 String bufferString = "";
 
-unsigned long time;
-int mDistance;
+unsigned long mTime;
 boolean mIsRobotMode = true; //Only for tests
 boolean mIsRunning;
 
@@ -76,17 +75,12 @@ void loop() {
       readMessage();
     }
   }
-  if(mIsRobotMode && time < (millis() - DISTANCE_DELAY)) {
-    time = millis();
+  if(mIsRobotMode && mTime < (millis() - DISTANCE_DELAY)) {
+    mTime = millis();
     int currentDistance = ultrasonic.Ranging(CM);
-    if(currentDistance < MOTOR_START_DISTANCE ||
-      (currentDistance > MOTOR_START_HIGH_DISTANCE &&
-      currentDistance < MOTOR_RUN_DISTANCE) ||
-      currentDistance > MOTOR_RUN_HIGH_DISTANCE) {
-      mDistance = currentDistance;
-      Serial.println(mDistance);
-      reactOnDistance(mDistance);
-    }
+    Serial.println(currentDistance);
+    reactOnDistance(currentDistance);
+
   }
 } 
 
@@ -242,6 +236,7 @@ void stopF(){
   digitalWrite(R_A_IB, LOW);
   mIsRunning = false;
 }
+
 
 
 
