@@ -18,17 +18,14 @@ const int ATTEMPTS_TOTAL = 3;
 const int STOP_DISTANCE = 30; //In centimeters
 const int FREE_DISTANCE = 200; //In centimeters
 
-//Motor sounds...
-const int MOTOR_START_DISTANCE = 20;
-const int MOTOR_START_HIGH_DISTANCE = 30;
-const int MOTOR_RUN_DISTANCE = 50;
-const int MOTOR_RUN_HIGH_DISTANCE = 60;
-
 const int DISTANCE_DELAY = 150;
 
 const int ZERO_ANGLE = 90; 
 const int MAX_ANGLE = 26; 
 const int START_ANGLE = 6; 
+
+const int DIRECTION_FORWARD = 1; 
+const int DIRECTION_BACKWARD = 2; 
 
 const int SERVO_PIN = 9;
 const int LED = 13; 
@@ -37,12 +34,17 @@ const int LED = 13;
 const int TRIG_PIN = 11;
 const int ECHO_PIN = 12;
 
+//rear distance sensor
+const int REAR_TRIG_PIN = 7;
+const int REAR_ECHO_PIN = 8;
+
 //Motor driver section
 const int R_A_IA = 5; // A-IA
 const int R_A_IB = 6; // A-IB
 
 Servo myServo;  
-Ultrasonic ultrasonic(TRIG_PIN, ECHO_PIN);
+Ultrasonic mFrontUltrasonic(TRIG_PIN, ECHO_PIN);
+Ultrasonic mRearUltrasonic(REAR_TRIG_PIN, REAR_ECHO_PIN);
 
 char incomingByte;
 int attemptCount;
@@ -51,6 +53,7 @@ String bufferString = "";
 unsigned long mTime;
 boolean mIsRobotMode; //Only for tests
 boolean mIsRunning;
+int mDirection;
 
 void setup() { 
   Serial.begin(9600);
@@ -78,12 +81,21 @@ void loop() {
   }
   if(mIsRobotMode && mTime < (millis() - DISTANCE_DELAY)) {
     mTime = millis();
-    int currentDistance = ultrasonic.Ranging(CM);
-    Serial.println(currentDistance);
-    reactOnDistance(currentDistance);
-
+    makeDecision();
   }
 } 
+
+void makeDecision() {
+  if(mDirection != DIRECTION_BACKWARD) {
+    int currentDistance = mFrontUltrasonic.Ranging(CM);
+    sendMessage(currentDistance);
+    reactOnDistance(currentDistance);
+  } else {
+    int currentDistance = mRearUltrasonic.Ranging(CM);
+    sendMessage(currentDistance);
+    tryGoBack(currentDistance);
+  }
+}
 
 void readMessage() {
   String message = "";
@@ -212,9 +224,19 @@ void reactOnDistance(int distance) {
   }
 }
 
+void tryGoBack(int distance) {
+  if(distance < STOP_DISTANCE) {
+    stopB();
+  } else {
+    turnToAngle(ZERO_ANGLE + MAX_ANGLE); //turn max to right 
+    runB();
+  }
+}
+
 void runF(){
   if(!mIsRunning) {
     mIsRunning = true;
+    mDirection = 1;
     analogWrite(R_A_IA, 170);
     digitalWrite(R_A_IB, LOW);
   }
@@ -236,7 +258,39 @@ void stopF(){
   digitalWrite(R_A_IA, LOW);
   digitalWrite(R_A_IB, LOW);
   mIsRunning = false;
+  mDirection = 0;
 }
+
+void runB(){
+  if(!mIsRunning) {
+    mIsRunning = true;
+    mDirection = 2;
+    analogWrite(R_A_IA, 50);
+    digitalWrite(R_A_IB, HIGH);
+  }
+}
+
+void stopB(){
+  if(mIsRunning) {
+    digitalWrite(R_A_IA, LOW);
+    digitalWrite(R_A_IB, LOW);
+
+    delay(10);
+
+    analogWrite(R_A_IA, 170);
+    digitalWrite(R_A_IB, LOW);
+
+    delay(70);
+  }
+
+  digitalWrite(R_A_IA, LOW);
+  digitalWrite(R_A_IB, LOW);
+  mIsRunning = false;
+  mDirection = 0;
+}
+
+
+
 
 
 
