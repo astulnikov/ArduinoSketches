@@ -28,7 +28,7 @@ const int DISTANCE_DELAY = 150;
 
 const int ZERO_ANGLE = 90; 
 const int MAX_ANGLE = 26; 
-const int START_ANGLE = 0; 
+const int START_ANGLE = 6; 
 
 const int SERVO_PIN = 9;
 const int LED = 13; 
@@ -49,7 +49,7 @@ int attemptCount;
 String bufferString = "";
 
 unsigned long mTime;
-boolean mIsRobotMode = true; //Only for tests
+boolean mIsRobotMode; //Only for tests
 boolean mIsRunning;
 
 void setup() { 
@@ -64,6 +64,7 @@ void setup() {
 
   //servo init
   myServo.attach(SERVO_PIN);
+  turnToAngle(START_ANGLE + ZERO_ANGLE);
 } 
 
 
