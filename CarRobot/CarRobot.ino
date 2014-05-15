@@ -27,6 +27,8 @@ const int START_ANGLE = 6;
 const int DIRECTION_FORWARD = 1; 
 const int DIRECTION_BACKWARD = 2; 
 
+const int WAY_BLOCKED = 5; 
+
 const int SERVO_PIN = 9;
 const int LED = 13; 
 
@@ -51,9 +53,10 @@ int attemptCount;
 String bufferString = "";
 
 unsigned long mTime;
-boolean mIsRobotMode; //Only for tests
+boolean mIsRobotMode = true; //Only for tests
 boolean mIsRunning;
 int mDirection;
+int mIsWayBlocked;
 
 void setup() { 
   Serial.begin(9600);
@@ -86,11 +89,12 @@ void loop() {
 } 
 
 void makeDecision() {
-  if(mDirection != DIRECTION_BACKWARD) {
+  if(mDirection != DIRECTION_BACKWARD && mIsWayBlocked < WAY_BLOCKED) {
     int currentDistance = mFrontUltrasonic.Ranging(CM);
     sendMessage(currentDistance);
     reactOnDistance(currentDistance);
-  } else {
+  } else if(mDirection == DIRECTION_BACKWARD || mIsWayBlocked == WAY_BLOCKED){
+    mIsWayBlocked = 0;
     int currentDistance = mRearUltrasonic.Ranging(CM);
     sendMessage(currentDistance);
     tryGoBack(currentDistance);
@@ -167,6 +171,10 @@ void sendMessage(String message){
   Serial.println(message);
 }
 
+void sendMessage(int message){
+  Serial.println(String(message));
+}
+
 void safeSend(String message) {
   digitalWrite(LED, HIGH);
   attemptCount++;
@@ -228,7 +236,7 @@ void tryGoBack(int distance) {
   if(distance < STOP_DISTANCE) {
     stopB();
   } else {
-    turnToAngle(ZERO_ANGLE + MAX_ANGLE); //turn max to right 
+    turnToAngle(ZERO_ANGLE - MAX_ANGLE); //turn max to right 
     runB();
   }
 }
@@ -259,12 +267,13 @@ void stopF(){
   digitalWrite(R_A_IB, LOW);
   mIsRunning = false;
   mDirection = 0;
+  mIsWayBlocked++;
 }
 
 void runB(){
   if(!mIsRunning) {
     mIsRunning = true;
-    mDirection = 2;
+    mDirection = DIRECTION_BACKWARD;
     analogWrite(R_A_IA, 50);
     digitalWrite(R_A_IB, HIGH);
   }
