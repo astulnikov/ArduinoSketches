@@ -24,6 +24,9 @@ const int MAX_ANGLE = 26;
 const int START_ANGLE = 6; 
 const int ZERO_ANGLE = 90 + START_ANGLE; 
 
+const int MAX_SPEED_FORWARD = 170;
+const int MAX_SPEED_BACKWARD = 70;
+
 const int DIRECTION_NO = 0;
 const int DIRECTION_FORWARD = 1; 
 const int DIRECTION_BACKWARD = 2; 
@@ -94,7 +97,8 @@ void makeDecision() {
     int currentDistance = mFrontUltrasonic.Ranging(CM);
     sendMessage(currentDistance);
     reactOnDistance(currentDistance);
-  } else if(mDirection == DIRECTION_BACKWARD || mIsWayBlocked == WAY_BLOCKED){
+  } 
+  else if(mDirection == DIRECTION_BACKWARD || mIsWayBlocked == WAY_BLOCKED){
     mIsWayBlocked = 0;
     int currentDistance = mRearUltrasonic.Ranging(CM);
     sendMessage(currentDistance);
@@ -228,15 +232,17 @@ void reactOnDistance(int distance) {
     runF();
   } 
   else {
-    turnToAngle(ZERO_ANGLE);  
-    runF();
+    turnToAngle(ZERO_ANGLE);
+    float power = (float) (1.0 / (FREE_DISTANCE - STOP_DISTANCE)) * distance;
+    runF(power);
   }
 }
 
 void tryGoBack(int distance) {
   if(distance < STOP_DISTANCE) {
     stopB();
-  } else {
+  } 
+  else {
     turnToAngle(ZERO_ANGLE - MAX_ANGLE); //turn max to right 
     runB();
   }
@@ -246,7 +252,16 @@ void runF(){
   if(!mIsRunning) {
     mIsRunning = true;
     mDirection = DIRECTION_FORWARD;
-    analogWrite(R_A_IA, 170);
+    analogWrite(R_A_IA, MAX_SPEED_FORWARD);
+    digitalWrite(R_A_IB, LOW);
+  }
+}
+
+void runF(float power){
+  if(!mIsRunning) {
+    mIsRunning = true;
+    mDirection = DIRECTION_FORWARD;
+    analogWrite(R_A_IA, (int) MAX_SPEED_FORWARD * power);
     digitalWrite(R_A_IB, LOW);
   }
 }
@@ -298,6 +313,7 @@ void stopB(){
   mIsRunning = false;
   mDirection = DIRECTION_NO;
 }
+
 
 
 
