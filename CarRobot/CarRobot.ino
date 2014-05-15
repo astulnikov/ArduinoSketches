@@ -15,15 +15,16 @@ const int PAUSE_DELAY = 5;
 const int READ_MESSAGE_DELAY = 5;
 const int WAIT_FOR_APPROVE_DELAY = 100;
 const int ATTEMPTS_TOTAL = 3; 
-const int STOP_DISTANCE = 30; //In centimeters
+const int STOP_DISTANCE = 20; //In centimeters
 const int FREE_DISTANCE = 200; //In centimeters
 
 const int DISTANCE_DELAY = 150;
 
-const int ZERO_ANGLE = 90; 
 const int MAX_ANGLE = 26; 
 const int START_ANGLE = 6; 
+const int ZERO_ANGLE = 90 + START_ANGLE; 
 
+const int DIRECTION_NO = 0;
 const int DIRECTION_FORWARD = 1; 
 const int DIRECTION_BACKWARD = 2; 
 
@@ -70,7 +71,7 @@ void setup() {
 
   //servo init
   myServo.attach(SERVO_PIN);
-  turnToAngle(START_ANGLE + ZERO_ANGLE);
+  turnToAngle(ZERO_ANGLE);
 } 
 
 
@@ -244,7 +245,7 @@ void tryGoBack(int distance) {
 void runF(){
   if(!mIsRunning) {
     mIsRunning = true;
-    mDirection = 1;
+    mDirection = DIRECTION_FORWARD;
     analogWrite(R_A_IA, 170);
     digitalWrite(R_A_IB, LOW);
   }
@@ -255,18 +256,18 @@ void stopF(){
     digitalWrite(R_A_IA, LOW);
     digitalWrite(R_A_IB, LOW);
 
-    delay(10);
+    delay(5);
 
     analogWrite(R_A_IA, 70);
     digitalWrite(R_A_IB, HIGH);
 
-    delay(70);
+    delay(100);
   }
 
   digitalWrite(R_A_IA, LOW);
   digitalWrite(R_A_IB, LOW);
   mIsRunning = false;
-  mDirection = 0;
+  mDirection = DIRECTION_NO;
   mIsWayBlocked++;
 }
 
@@ -284,18 +285,18 @@ void stopB(){
     digitalWrite(R_A_IA, LOW);
     digitalWrite(R_A_IB, LOW);
 
-    delay(10);
+    delay(5);
 
     analogWrite(R_A_IA, 170);
     digitalWrite(R_A_IB, LOW);
 
-    delay(70);
+    delay(100);
   }
 
   digitalWrite(R_A_IA, LOW);
   digitalWrite(R_A_IB, LOW);
   mIsRunning = false;
-  mDirection = 0;
+  mDirection = DIRECTION_NO;
 }
 
 
