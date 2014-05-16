@@ -271,7 +271,7 @@ void stopF(){
     digitalWrite(R_A_IA, LOW);
     digitalWrite(R_A_IB, LOW);
 
-    delay(5);
+    delay(15);
 
     analogWrite(R_A_IA, 70);
     digitalWrite(R_A_IB, HIGH);
@@ -300,7 +300,7 @@ void stopB(){
     digitalWrite(R_A_IA, LOW);
     digitalWrite(R_A_IB, LOW);
 
-    delay(5);
+    delay(15);
 
     analogWrite(R_A_IA, 170);
     digitalWrite(R_A_IB, LOW);
