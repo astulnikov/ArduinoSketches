@@ -25,7 +25,7 @@ const int START_ANGLE = 6;
 const int ZERO_ANGLE = 90 + START_ANGLE; 
 
 const int MAX_SPEED_FORWARD = 170;
-const int MAX_SPEED_BACKWARD = 70;
+const int MAX_SPEED_BACKWARD = 120;
 
 const int DIRECTION_NO = 0;
 const int DIRECTION_FORWARD = 1; 
@@ -61,6 +61,7 @@ boolean mIsRobotMode = true; //Only for tests
 boolean mIsRunning;
 int mDirection;
 int mIsWayBlocked;
+float mCurrentPower;
 
 void setup() { 
   Serial.begin(9600);
@@ -222,19 +223,19 @@ void setRobotMode(boolean robotMode) {
 }
 
 void reactOnDistance(int distance) {
-  if(distance < STOP_DISTANCE) {
+  if(distance < STOP_DISTANCE && distance > 0) {
     stopF();
   } 
-  else if(distance < FREE_DISTANCE) {
+  else if(distance < FREE_DISTANCE && distance > 0) {
     float degreePerCentimeter = (float) MAX_ANGLE / (float) FREE_DISTANCE;
     int steeringAngle = ZERO_ANGLE + MAX_ANGLE - degreePerCentimeter * distance;
     turnToAngle(steeringAngle);  
-    runF();
+    float power = (float) (0.4 / (FREE_DISTANCE - STOP_DISTANCE)) * distance + 0.6;
+    runF(power);
   } 
   else {
     turnToAngle(ZERO_ANGLE);
-    float power = (float) (1.0 / (FREE_DISTANCE - STOP_DISTANCE)) * distance;
-    runF(power);
+    runF();
   }
 }
 
@@ -249,18 +250,22 @@ void tryGoBack(int distance) {
 }
 
 void runF(){
-  if(!mIsRunning) {
+  if(mCurrentPower < 1) {
     mIsRunning = true;
+    mCurrentPower = 1.0;
     mDirection = DIRECTION_FORWARD;
+    Serial.println("MAX POWER");
     analogWrite(R_A_IA, MAX_SPEED_FORWARD);
     digitalWrite(R_A_IB, LOW);
   }
 }
 
 void runF(float power){
-  if(!mIsRunning) {
+  if(mCurrentPower != power) {
     mIsRunning = true;
+    mCurrentPower = power;
     mDirection = DIRECTION_FORWARD;
+    Serial.println(power);
     analogWrite(R_A_IA, (int) MAX_SPEED_FORWARD * power);
     digitalWrite(R_A_IB, LOW);
   }
@@ -290,7 +295,7 @@ void runB(){
   if(!mIsRunning) {
     mIsRunning = true;
     mDirection = DIRECTION_BACKWARD;
-    analogWrite(R_A_IA, 50);
+    analogWrite(R_A_IA, MAX_SPEED_BACKWARD);
     digitalWrite(R_A_IB, HIGH);
   }
 }
@@ -313,6 +318,10 @@ void stopB(){
   mIsRunning = false;
   mDirection = DIRECTION_NO;
 }
+
+
+
+
 
 
 

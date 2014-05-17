@@ -22,7 +22,7 @@ void setup() {
 
 void loop() { 
   digitalWrite(LED, HIGH);
-  analogWrite(R_A_IA, 150);
+  analogWrite(R_A_IA, 5);
   digitalWrite(R_A_IB, LOW);
 
   delay(1000);
