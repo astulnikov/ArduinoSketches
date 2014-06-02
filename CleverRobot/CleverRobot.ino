@@ -12,16 +12,16 @@ const int MAX_SPEED_FORWARD = 170;
 const int MAX_SPEED_BACKWARD = 85;
 
 //distance sensor
-const int TRIG_PIN = 54;
-const int ECHO_PIN = 55;
+const int TRIG_PIN = 33;
+const int ECHO_PIN = 32;
 
 //Motor driver section Left
-const int R_A_IA = 5; // A-IA
-const int R_A_IB = 6; // A-IB
+const int R_A_IA = 12; // A-IA
+const int R_A_IB = 13; // A-IB
 
 //Motor driver section Right
-const int R_B_IA = 7; // B-IA
-const int R_B_IB = 8; // B-IB
+const int R_B_IA = 10; // B-IA
+const int R_B_IB = 11; // B-IB
 
 Ultrasonic mFrontUltrasonic(TRIG_PIN, ECHO_PIN);
 
@@ -66,6 +66,18 @@ void setup() {
   Serial.println("Attaching Interrupts for speed measure...");
   attachInterrupt(0, diskInterruptLeft, RISING);
   attachInterrupt(1, diskInterruptRight, RISING);
+  
+  //left motor init
+  pinMode(R_A_IA,OUTPUT);
+  digitalWrite(R_A_IA, LOW);
+  pinMode(R_A_IB,OUTPUT);
+  digitalWrite(R_A_IB, LOW);
+  
+  //right motors init
+  pinMode(R_B_IA,OUTPUT);
+  digitalWrite(R_B_IA, LOW);
+  pinMode(R_B_IB,OUTPUT);
+  digitalWrite(R_B_IB, LOW);
 }
 
 void loop() {

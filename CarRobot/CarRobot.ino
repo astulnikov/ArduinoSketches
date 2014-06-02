@@ -57,7 +57,7 @@ int attemptCount;
 String bufferString = "";
 
 unsigned long mTime;
-boolean mIsRobotMode = true; //Only for tests
+boolean mIsRobotMode = false; //Only for tests
 boolean mIsRunning;
 int mDirection;
 int mIsWayBlocked;
