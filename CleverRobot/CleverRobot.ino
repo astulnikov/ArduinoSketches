@@ -120,32 +120,32 @@ int getRPM(volatile int *ticks, long *time){
 
 void goMove(){
   //different movies
-  mCurrntIteration++
-    switch(mCurrentIteration) {
+  mCurrntIteration++;
+    switch(mCurrntIteration) {
   case 1:
-    runForvard();
+    runForward();
     break; 
   case 2:
-    stopRun();
+    stopRunning();
     break; 
   case 3:
     runBackward();
     break;
   case 4:
-    stopRun();
+    stopRunning();
     break;
   case 5:
     turnLeft();
     break;  
   case 6:
-    stopRun();
+    stopRunning();
     break;  
   case 7:
     turnRight();
     break;  
   case 8:
-    stopRun();
-    mCurrentIteration = 0;
+    stopRunning();
+    mCurrntIteration = 0;
     break;  
   } 
 }
