@@ -8,9 +8,20 @@
 
 const long ONE_MINUTE = 60000;
 
+const int MAX_SPEED_FORWARD = 170;
+const int MAX_SPEED_BACKWARD = 85;
+
 //distance sensor
 const int TRIG_PIN = 54;
 const int ECHO_PIN = 55;
+
+//Motor driver section Left
+const int R_A_IA = 5; // A-IA
+const int R_A_IB = 6; // A-IB
+
+//Motor driver section Right
+const int R_B_IA = 7; // B-IA
+const int R_B_IB = 8; // B-IB
 
 Ultrasonic mFrontUltrasonic(TRIG_PIN, ECHO_PIN);
 
@@ -25,6 +36,9 @@ volatile int mTicksLeft;
 volatile int mTicksRight;
 long mTimeLeft;
 long mTimeRight;
+
+//Test var for different movies
+int mCurrntIteration;
 
 void setup() {
   // join I2C bus (I2Cdev library doesn't do this automatically)
@@ -68,6 +82,8 @@ void loop() {
   Serial.print("Distance: ");
   Serial.println(currentDistance);
 
+  goMove();
+
   delay(1000); 
 }
 
@@ -102,15 +118,93 @@ int getRPM(volatile int *ticks, long *time){
   *time = millis();
 }
 
-//Capture The IR Break-Beam Interrupt
+void goMove(){
+  //different movies
+  mCurrntIteration++
+    switch(mCurrentIteration) {
+  case 1:
+    runForvard();
+    break; 
+  case 2:
+    stopRun();
+    break; 
+  case 3:
+    runBackward();
+    break;
+  case 4:
+    stopRun();
+    break;
+  case 5:
+    turnLeft();
+    break;  
+  case 6:
+    stopRun();
+    break;  
+  case 7:
+    turnRight();
+    break;  
+  case 8:
+    stopRun();
+    mCurrentIteration = 0;
+    break;  
+  } 
+}
+
+void runForward(){
+  Serial.println("RUN FORWARD");
+  analogWrite(R_A_IA, MAX_SPEED_FORWARD);
+  analogWrite(R_B_IA, MAX_SPEED_FORWARD);
+  digitalWrite(R_A_IB, LOW);
+  digitalWrite(R_B_IB, LOW);
+}
+
+void runBackward(){
+  Serial.println("RUN BACKWARD");
+  analogWrite(R_A_IA, MAX_SPEED_BACKWARD);
+  analogWrite(R_B_IA, MAX_SPEED_BACKWARD);
+  digitalWrite(R_A_IB, HIGH);
+  digitalWrite(R_B_IB, HIGH);
+}
+
+void stopRunning(){
+  Serial.println("STOP");
+  digitalWrite(R_A_IA, LOW);
+  digitalWrite(R_B_IA, LOW);
+  digitalWrite(R_A_IB, LOW);
+  digitalWrite(R_B_IB, LOW);
+}
+
+void turnLeft(){
+  Serial.println("TURN LEFT");
+  analogWrite(R_A_IA, MAX_SPEED_FORWARD);
+  analogWrite(R_B_IA, MAX_SPEED_BACKWARD);
+  digitalWrite(R_A_IB, LOW);
+  digitalWrite(R_B_IB, HIGH);
+}
+
+void turnRight(){
+  Serial.println("TURN RIGHT");
+  analogWrite(R_A_IA, MAX_SPEED_BACKWARD);
+  analogWrite(R_B_IA, MAX_SPEED_FORWARD);
+  digitalWrite(R_A_IB, HIGH);
+  digitalWrite(R_B_IB, LOW);
+}
+
+//Capture The left IR Break-Beam Interrupt
 void diskInterruptLeft(){
   mTicksLeft++;
 }
 
-//Capture The IR Break-Beam Interrupt
+//Capture The right IR Break-Beam Interrupt
 void diskInterruptRight(){
   mTicksRight++;
 }
+
+
+
+
+
+
 
 
 
