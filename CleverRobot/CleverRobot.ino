@@ -8,8 +8,8 @@
 
 const long ONE_MINUTE = 60000;
 
-const int MAX_SPEED_FORWARD = HIGH; //200 for regulating
-const int MAX_SPEED_BACKWARD = LOW; //50
+const int MAX_SPEED_FORWARD = 200;
+const int MAX_SPEED_BACKWARD = 50;
 
 //distance sensor
 const int TRIG_PIN = 33;
