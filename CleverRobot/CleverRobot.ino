@@ -8,8 +8,8 @@
 
 const long ONE_MINUTE = 60000;
 
-const int MAX_SPEED_FORWARD = 170;
-const int MAX_SPEED_BACKWARD = 85;
+const int MAX_SPEED_FORWARD = 200;
+const int MAX_SPEED_BACKWARD = 50;
 
 //distance sensor
 const int TRIG_PIN = 33;
@@ -66,13 +66,13 @@ void setup() {
   Serial.println("Attaching Interrupts for speed measure...");
   attachInterrupt(0, diskInterruptLeft, RISING);
   attachInterrupt(1, diskInterruptRight, RISING);
-  
+
   //left motor init
   pinMode(R_A_IA,OUTPUT);
   digitalWrite(R_A_IA, LOW);
   pinMode(R_A_IB,OUTPUT);
   digitalWrite(R_A_IB, LOW);
-  
+
   //right motors init
   pinMode(R_B_IA,OUTPUT);
   digitalWrite(R_B_IA, LOW);
@@ -86,9 +86,11 @@ void loop() {
   Serial.println(heading);
 
   Serial.print("RPM left: ");
-  Serial.println(getRPM(&mTicksLeft, &mTimeLeft), DEC);
+  int rpmLeft = getRPMLeft();
+  Serial.println(rpmLeft);
   Serial.print("RPM right: ");
-  Serial.println(getRPM(&mTicksRight, &mTimeRight), DEC);
+  int rpmRight = getRPMRight();
+  Serial.println(rpmRight);
 
   int currentDistance = mFrontUltrasonic.Ranging(CM);
   Serial.print("Distance: ");
@@ -121,19 +123,35 @@ float getHeading(){
   return heading * RAD_TO_DEG; //radians to degrees
 }
 
-int getRPM(volatile int *ticks, long *time){
-  int ticksValue = *ticks;
-  long timeValue = *time;
-  float revolutions = ticksValue / 20.0;
-  *ticks = 0;
-  int rpm = revolutions * ONE_MINUTE / (millis() - timeValue);
-  *time = millis();
+//int getRPM(volatile int *ticks, long *time){
+//  int ticksValue = *ticks;
+//  long timeValue = *time;
+//  float revolutions = ticksValue / 20.0;
+//  *ticks = 0;
+//  int rpm = revolutions * ONE_MINUTE / (millis() - timeValue);
+//  *time = millis();
+//}
+
+int getRPMLeft(){
+  float revolutions = mTicksLeft / 20.0;
+  mTicksLeft = 0;
+  int rpm = revolutions * ONE_MINUTE / (millis() - mTimeLeft);
+  mTimeLeft = millis();
+  return rpm;
+}
+
+int getRPMRight(){
+  float revolutions = mTicksRight / 20.0;
+  mTicksRight = 0;
+  int rpm = revolutions * ONE_MINUTE / (millis() - mTimeRight);
+  mTimeRight = millis();
+  return rpm;
 }
 
 void goMove(){
   //different movies
   mCurrntIteration++;
-    switch(mCurrntIteration) {
+  switch(mCurrntIteration) {
   case 1:
     runForward();
     break; 
@@ -211,6 +229,8 @@ void diskInterruptLeft(){
 void diskInterruptRight(){
   mTicksRight++;
 }
+
+
 
 
 

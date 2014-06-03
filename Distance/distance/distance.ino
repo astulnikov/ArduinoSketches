@@ -1,6 +1,6 @@
 int ledPin = 13;
-int trigPin = 11;
-int echoPin = 12;
+int trigPin = 33;
+int echoPin = 32;
 
 long distance;
 int ledLevel; 

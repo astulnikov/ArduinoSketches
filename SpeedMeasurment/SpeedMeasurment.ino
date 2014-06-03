@@ -1,6 +1,6 @@
 volatile int ticks;
 int rpmilli;
-int revolutions;
+float revolutions;
 long timeold;
 
 void setup(){
@@ -11,11 +11,12 @@ void setup(){
 
 void loop(){
   delay(500);
-  revolutions = ticks / 20;
+  revolutions = ticks / 20.0;
   ticks = 0;
   rpmilli = revolutions * 60000 / (millis() - timeold);
   timeold = millis();
 
+  Serial.println(revolutions, DEC);
   Serial.print("RPM: ");
   Serial.println(rpmilli, DEC);
 }
@@ -24,6 +25,7 @@ void loop(){
 void diskInterrupt(){
   ticks++;
 }
+
 
 
 
