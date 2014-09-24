@@ -8,20 +8,28 @@
 
 const long ONE_MINUTE = 60000;
 
-const int MAX_SPEED_FORWARD = 200;
-const int MAX_SPEED_BACKWARD = 50;
+const int MAX_SPEED_FORWARD = 80;
+const int MAX_SPEED_BACKWARD = 170;
 
 //distance sensor
 const int TRIG_PIN = 33;
 const int ECHO_PIN = 32;
 
-//Motor driver section Left
-const int R_A_IA = 12; // A-IA
-const int R_A_IB = 13; // A-IB
+//Motor driver section Left-Front
+const int L_R_A_IA = 11; // A-IA
+const int L_R_A_IB = 12; // A-IB
 
-//Motor driver section Right
-const int R_B_IA = 10; // B-IA
-const int R_B_IB = 11; // B-IB
+//Motor driver section Left-Rear
+const int L_R_B_IA = 9;  // B-IA
+const int L_R_B_IB = 10; // B-IB
+
+//Motor driver section Right-Front
+const int R_R_A_IA = 6;  // A-IA
+const int R_R_A_IB = 7; // A-IB
+
+//Motor driver section Right-Rear
+const int R_R_B_IA = 4; // B-IA
+const int R_R_B_IB = 5; // B-IB
 
 Ultrasonic mFrontUltrasonic(TRIG_PIN, ECHO_PIN);
 
@@ -67,17 +75,29 @@ void setup() {
   attachInterrupt(0, diskInterruptLeft, RISING);
   attachInterrupt(1, diskInterruptRight, RISING);
 
-  //left motor init
-  pinMode(R_A_IA,OUTPUT);
-  digitalWrite(R_A_IA, LOW);
-  pinMode(R_A_IB,OUTPUT);
-  digitalWrite(R_A_IB, LOW);
+  //left front motor init
+  pinMode(L_R_A_IA,OUTPUT);
+  digitalWrite(L_R_A_IA, LOW);
+  pinMode(L_R_A_IB,OUTPUT);
+  digitalWrite(L_R_A_IB, LOW);
 
-  //right motors init
-  pinMode(R_B_IA,OUTPUT);
-  digitalWrite(R_B_IA, LOW);
-  pinMode(R_B_IB,OUTPUT);
-  digitalWrite(R_B_IB, LOW);
+  //left rear motors init
+  pinMode(L_R_B_IA,OUTPUT);
+  digitalWrite(L_R_B_IA, LOW);
+  pinMode(L_R_B_IB,OUTPUT);
+  digitalWrite(L_R_B_IB, LOW);
+
+  //right front motor init
+  pinMode(R_R_A_IA,OUTPUT);
+  digitalWrite(R_R_A_IA, LOW);
+  pinMode(R_R_A_IB,OUTPUT);
+  digitalWrite(R_R_A_IB, LOW);
+
+  //right rear motors init
+  pinMode(R_R_B_IA,OUTPUT);
+  digitalWrite(R_R_B_IA, LOW);
+  pinMode(R_R_B_IB,OUTPUT);
+  digitalWrite(R_R_B_IB, LOW);
 }
 
 void loop() {
@@ -98,7 +118,7 @@ void loop() {
 
   goMove();
 
-  delay(1000); 
+  delay(500); 
 }
 
 void setupHMC5883L(){
@@ -182,42 +202,75 @@ void goMove(){
 
 void runForward(){
   Serial.println("RUN FORWARD");
-  analogWrite(R_A_IA, MAX_SPEED_FORWARD);
-  analogWrite(R_B_IA, MAX_SPEED_FORWARD);
-  digitalWrite(R_A_IB, LOW);
-  digitalWrite(R_B_IB, LOW);
+  digitalWrite(L_R_A_IA, HIGH);
+  analogWrite(L_R_A_IB, MAX_SPEED_FORWARD);
+  
+  digitalWrite(L_R_B_IA, HIGH); 
+  analogWrite(L_R_B_IB, MAX_SPEED_FORWARD);
+  
+  digitalWrite(R_R_A_IA, HIGH); 
+  analogWrite(R_R_A_IB, MAX_SPEED_FORWARD);
+  
+  digitalWrite(R_R_B_IA, HIGH); 
+  analogWrite(R_R_B_IB, MAX_SPEED_FORWARD);
 }
 
 void runBackward(){
   Serial.println("RUN BACKWARD");
-  analogWrite(R_A_IA, MAX_SPEED_BACKWARD);
-  analogWrite(R_B_IA, MAX_SPEED_BACKWARD);
-  digitalWrite(R_A_IB, HIGH);
-  digitalWrite(R_B_IB, HIGH);
+  digitalWrite(L_R_A_IA, LOW);
+  analogWrite(L_R_A_IB, MAX_SPEED_BACKWARD);
+  
+  digitalWrite(L_R_B_IA, LOW); 
+  analogWrite(L_R_B_IB, MAX_SPEED_BACKWARD);
+  
+  digitalWrite(R_R_A_IA, LOW); 
+  analogWrite(R_R_A_IB, MAX_SPEED_BACKWARD);
+  
+  digitalWrite(R_R_B_IA, LOW); 
+  analogWrite(R_R_B_IB, MAX_SPEED_BACKWARD);
 }
 
 void stopRunning(){
   Serial.println("STOP");
-  digitalWrite(R_A_IA, LOW);
-  digitalWrite(R_B_IA, LOW);
-  digitalWrite(R_A_IB, LOW);
-  digitalWrite(R_B_IB, LOW);
-}
-
-void turnLeft(){
-  Serial.println("TURN LEFT");
-  analogWrite(R_A_IA, MAX_SPEED_FORWARD);
-  analogWrite(R_B_IA, MAX_SPEED_BACKWARD);
-  digitalWrite(R_A_IB, LOW);
-  digitalWrite(R_B_IB, HIGH);
+ digitalWrite(L_R_A_IA, LOW);
+  digitalWrite(L_R_A_IB, LOW);
+  digitalWrite(L_R_B_IA, LOW);
+  digitalWrite(L_R_B_IB, LOW);
+  
+  digitalWrite(R_R_A_IA, LOW);
+  digitalWrite(R_R_A_IB, LOW);
+  digitalWrite(R_R_B_IA, LOW);
+  digitalWrite(R_R_B_IB, LOW);
 }
 
 void turnRight(){
   Serial.println("TURN RIGHT");
-  analogWrite(R_A_IA, MAX_SPEED_BACKWARD);
-  analogWrite(R_B_IA, MAX_SPEED_FORWARD);
-  digitalWrite(R_A_IB, HIGH);
-  digitalWrite(R_B_IB, LOW);
+  digitalWrite(L_R_A_IA, LOW);
+  analogWrite(L_R_A_IB, MAX_SPEED_BACKWARD);
+  
+  digitalWrite(L_R_B_IA, LOW); 
+  analogWrite(L_R_B_IB, MAX_SPEED_BACKWARD);
+  
+  digitalWrite(R_R_A_IA, HIGH); 
+  analogWrite(R_R_A_IB, MAX_SPEED_FORWARD);
+  
+  digitalWrite(R_R_B_IA, HIGH); 
+  analogWrite(R_R_B_IB, MAX_SPEED_FORWARD);
+}
+
+void turnLeft(){
+  Serial.println("TURN LEFT");
+  digitalWrite(L_R_A_IA, HIGH);
+  analogWrite(L_R_A_IB, MAX_SPEED_FORWARD);
+  
+  digitalWrite(L_R_B_IA, HIGH); 
+  analogWrite(L_R_B_IB, MAX_SPEED_FORWARD);
+  
+  digitalWrite(R_R_A_IA, LOW); 
+  analogWrite(R_R_A_IB, MAX_SPEED_BACKWARD);
+  
+  digitalWrite(R_R_B_IA, LOW); 
+  analogWrite(R_R_B_IB, MAX_SPEED_BACKWARD);
 }
 
 //Capture The left IR Break-Beam Interrupt
