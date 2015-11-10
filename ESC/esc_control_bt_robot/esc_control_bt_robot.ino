@@ -74,6 +74,7 @@ void setup() {
   esc.attach(SERVO_ESC_PIN);
   esc.write(90);
   myServo.attach(SERVO_PIN);
+  turnToAngle(ZERO_ANGLE);
 }
 
 void loop() {
@@ -108,7 +109,7 @@ void readMessage() {
 void chooseAction(String data) {
   if (data.charAt(0) == STEERING_SYMBOL) {
     String angle = data.substring(1);
-    myServo.write(angle.toInt());
+    turnToAngle(START_ANGLE + angle.toInt());
   } else if (data.charAt(0) == DRIVE_SYMBOL) {
     driveControl(data.charAt(1));
   } else if (data.charAt(0) == ROBOT_SYMBOL) {
@@ -215,7 +216,7 @@ void runF() {
     mCurrentPower = 1.0;
     mDirection = DIRECTION_FORWARD;
     runForward();
-  } else if(mDriveStartTime < (millis() - FAST_DRIVE_DELAY)){
+  } else if (mDriveStartTime < (millis() - FAST_DRIVE_DELAY)) {
     Serial.println("MAX POWER");
     runFastForward();
   }
