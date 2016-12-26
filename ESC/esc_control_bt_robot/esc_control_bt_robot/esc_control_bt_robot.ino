@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 #include <Servo.h>
 #include "Ultrasonic.h"
 
@@ -9,10 +11,12 @@ const char ROBOT_SYMBOL = 'r';
 
 const char RUN_FORWARD_SYMBOL = '1';
 const char RUN_FAST_FORWARD_SYMBOL = '3';
+const char RUN_FORWARD_PERCENT_SYMBOL = '4';
 const char RUN_BACK_SYMBOL = '2';
 const char STOP_SYMBOL = '0';
 
 const int READ_MESSAGE_DELAY = 5;
+const int COMMAND_DELAY = 20;
 
 const int STOP_DISTANCE = 20; //In centimeters
 const int FREE_DISTANCE = 200; //In centimeters
@@ -34,9 +38,9 @@ const int DIRECTION_BACKWARD = 2;
 const int WAY_BLOCKED = 5;
 
 const int STOP_ESC_VALUE = 1500;
-const int BACK_ESC_VALUE = 1200;
-const int RUN_ESC_VALUE = 1600;
-const int RUN_MAX_ESC_VALUE = 1750;
+const int BACK_ESC_VALUE = 1650;
+const int RUN_ESC_VALUE = 1200;
+const int RUN_MAX_ESC_VALUE = 710;
 
 //Steering servo
 const int SERVO_PIN = 9;
@@ -78,16 +82,24 @@ void setup() {
 }
 
 void loop() {
-  if (Serial.available() > 0) {
-    incomingByte = Serial.read();
-    if (incomingByte == CHECK_SYMBOL) {
-      delay(READ_MESSAGE_DELAY);
-      readMessage();
+  delay(COMMAND_DELAY);
+
+  if (!mIsRobotMode){
+    if (Serial.available() > 0) {
+      incomingByte = Serial.read();
+      if (incomingByte == CHECK_SYMBOL) {
+        delay(READ_MESSAGE_DELAY);
+        readMessage();
+      }
+    } else {
+      stopRun();
     }
-  }
-  if (mIsRobotMode && mTime < (millis() - DISTANCE_DELAY)) {
-    mTime = millis();
-    makeDecision();
+    sendMessage(mFrontUltrasonic.Ranging(CM));
+  } else {
+    if (mTime < (millis() - DISTANCE_DELAY)) {
+      mTime = millis();
+      makeDecision();
+    }
   }
 }
 
@@ -111,19 +123,21 @@ void chooseAction(String data) {
     String angle = data.substring(1);
     turnToAngle(START_ANGLE + angle.toInt());
   } else if (data.charAt(0) == DRIVE_SYMBOL) {
-    driveControl(data.charAt(1));
+    driveControl(data.substring(1));
   } else if (data.charAt(0) == ROBOT_SYMBOL) {
     setRobotMode(!mIsRobotMode);
   }
 }
 
-void driveControl(char command) {
-  if (command == RUN_FORWARD_SYMBOL) {
+void driveControl(String command) {
+  if (command.charAt(0) == RUN_FORWARD_SYMBOL) {
     runForward();
-  } else if (command == RUN_FAST_FORWARD_SYMBOL) {
+  } else if (command.charAt(0) == RUN_FAST_FORWARD_SYMBOL) {
     runFastForward();
-  } else if (command == RUN_BACK_SYMBOL) {
+  } else if (command.charAt(0) == RUN_BACK_SYMBOL) {
     runBack();
+  } else if (command.charAt(0) == RUN_FORWARD_PERCENT_SYMBOL){
+    runForward(command.substring(1).toInt());
   } else {
     stopRun();
   }
@@ -135,6 +149,11 @@ void runForward() {
 
 void runFastForward() {
   esc.writeMicroseconds(RUN_MAX_ESC_VALUE);
+}
+
+void runForward(int percent) {
+  int power = RUN_MAX_ESC_VALUE / 100 * percent;
+  esc.writeMicroseconds(power);
 }
 
 void runBack() {
