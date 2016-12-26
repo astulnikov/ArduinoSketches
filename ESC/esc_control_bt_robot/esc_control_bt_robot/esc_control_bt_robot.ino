@@ -94,7 +94,7 @@ void loop() {
     } else {
       stopRun();
     }
-    sendMessage(mFrontUltrasonic.Ranging(CM));
+    sendMessage(String(CHECK_SYMBOL) + mFrontUltrasonic.Ranging(CM));
   } else {
     if (mTime < (millis() - DISTANCE_DELAY)) {
       mTime = millis();
