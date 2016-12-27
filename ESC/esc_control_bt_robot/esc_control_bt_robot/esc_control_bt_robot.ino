@@ -16,7 +16,8 @@ const char RUN_BACK_SYMBOL = '2';
 const char STOP_SYMBOL = '0';
 
 const int READ_MESSAGE_DELAY = 5;
-const int COMMAND_DELAY = 20;
+const int COMMAND_DELAY = 300;
+const int INFO_DELAY = 1000;
 
 const int STOP_DISTANCE = 20; //In centimeters
 const int FREE_DISTANCE = 200; //In centimeters
@@ -25,7 +26,7 @@ const int FAST_DRIVE_DELAY = 500;
 const int BRAKE_APPLY_DELAY = 100;
 
 const int MAX_ANGLE = 26;
-const int START_ANGLE = 6;
+const int START_ANGLE = 4;
 const int ZERO_ANGLE = 90 + START_ANGLE;
 
 const int MAX_SPEED_FORWARD = 170;
@@ -67,6 +68,8 @@ String bufferString = "";
 
 unsigned long mDriveStartTime;
 unsigned long mTime;
+unsigned long mLastDriveCommandTimeStamp;
+unsigned long mLastSentInfoTimeStamp;
 boolean mIsRobotMode;
 boolean mIsRunning;
 int mDirection;
@@ -82,8 +85,6 @@ void setup() {
 }
 
 void loop() {
-  delay(COMMAND_DELAY);
-
   if (!mIsRobotMode){
     if (Serial.available() > 0) {
       incomingByte = Serial.read();
@@ -91,10 +92,17 @@ void loop() {
         delay(READ_MESSAGE_DELAY);
         readMessage();
       }
-    } else {
+    }
+
+    if(millis() - COMMAND_DELAY > mLastDriveCommandTimeStamp) {
       stopRun();
     }
-    sendMessage(String(CHECK_SYMBOL) + mFrontUltrasonic.Ranging(CM));
+    if(millis() - INFO_DELAY > mLastSentInfoTimeStamp) {
+    sendMessage(String(CHECK_SYMBOL) + mFrontUltrasonic.Ranging(CM) +
+      "\n" + mRearUltrasonic.Ranging(CM));
+    mLastSentInfoTimeStamp = millis();
+    }
+
   } else {
     if (mTime < (millis() - DISTANCE_DELAY)) {
       mTime = millis();
@@ -141,6 +149,7 @@ void driveControl(String command) {
   } else {
     stopRun();
   }
+  mLastDriveCommandTimeStamp = millis();
 }
 
 void runForward() {
