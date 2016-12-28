@@ -17,7 +17,7 @@ const char STOP_SYMBOL = '0';
 
 const int READ_MESSAGE_DELAY = 5;
 const int COMMAND_DELAY = 300;
-const int INFO_DELAY = 1000;
+const int INFO_DELAY = 500;
 
 const int STOP_DISTANCE = 20; //In centimeters
 const int FREE_DISTANCE = 200; //In centimeters
@@ -119,11 +119,6 @@ void readMessage() {
   }
 
   chooseAction(message);
-
-  String checkString = String(CHECK_SYMBOL);
-  String approveString = String(APPROVE_SYMBOL);
-  String approveMessage = String(checkString + approveString);
-  sendMessage(approveMessage);
 }
 
 void chooseAction(String data) {
