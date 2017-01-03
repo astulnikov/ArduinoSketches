@@ -4,6 +4,7 @@
 #include "Ultrasonic.h"
 
 const char CHECK_SYMBOL = 'c';
+const char END_LINE_SYMBOL = 'l';
 const char APPROVE_SYMBOL = 'a';
 const char STEERING_SYMBOL = 's';
 const char DRIVE_SYMBOL = 'd';
@@ -15,8 +16,8 @@ const char RUN_FORWARD_PERCENT_SYMBOL = '4';
 const char RUN_BACK_SYMBOL = '2';
 const char STOP_SYMBOL = '0';
 
-const int READ_MESSAGE_DELAY = 5;
-const int COMMAND_DELAY = 300;
+const int READ_MESSAGE_DELAY = 3;
+const int COMMAND_DELAY = 600;
 const int INFO_DELAY = 500;
 
 const int STOP_DISTANCE = 20; //In centimeters
@@ -78,6 +79,7 @@ float mCurrentPower;
 
 void setup() {
   Serial.begin(9600);
+  Serial.setTimeout(READ_MESSAGE_DELAY);
   esc.attach(SERVO_ESC_PIN);
   esc.write(90);
   myServo.attach(SERVO_PIN);
@@ -89,7 +91,6 @@ void loop() {
     if (Serial.available() > 0) {
       incomingByte = Serial.read();
       if (incomingByte == CHECK_SYMBOL) {
-        delay(READ_MESSAGE_DELAY);
         readMessage();
       }
     }
@@ -98,7 +99,7 @@ void loop() {
       stopRun();
     }
     if(millis() - INFO_DELAY > mLastSentInfoTimeStamp) {
-    sendMessage(String(CHECK_SYMBOL) + mFrontUltrasonic.Ranging(CM) +
+    sendMessage(mFrontUltrasonic.Ranging(CM) +
       "\n" + mRearUltrasonic.Ranging(CM));
     mLastSentInfoTimeStamp = millis();
     }
@@ -112,13 +113,13 @@ void loop() {
 }
 
 void readMessage() {
-  String message = "";
-  while (Serial.available()) {
-    incomingByte = Serial.read();
-    message.concat(incomingByte);
-  }
+  String message = Serial.readString();
 
   chooseAction(message);
+
+  String approveString = String(APPROVE_SYMBOL);
+  String approveMessage = String(approveString + message);
+  sendMessage(message);
 }
 
 void chooseAction(String data) {
@@ -175,11 +176,11 @@ void turnToAngle(int angle) {
 }
 
 void sendMessage(String message) {
-  Serial.println(message);
+  Serial.println(String(CHECK_SYMBOL) + message + String(END_LINE_SYMBOL));
 }
 
 void sendMessage(int message) {
-  Serial.println(String(message));
+  sendMessage(String(message));
 }
 
 void setRobotMode(boolean robotMode) {
