@@ -99,8 +99,8 @@ void loop() {
       stopRun();
     }
     if(millis() - INFO_DELAY > mLastSentInfoTimeStamp) {
-    sendMessage(mFrontUltrasonic.Ranging(CM) +
-      "\n" + mRearUltrasonic.Ranging(CM));
+    sendMessage("F:" + mFrontUltrasonic.Ranging(CM) +
+      " - R:" + mRearUltrasonic.Ranging(CM));
     mLastSentInfoTimeStamp = millis();
     }
 
