@@ -17,7 +17,7 @@ const char RUN_BACK_SYMBOL = '2';
 const char STOP_SYMBOL = '0';
 
 const int READ_MESSAGE_DELAY = 3;
-const int COMMAND_DELAY = 600;
+const int COMMAND_DELAY = 300;
 const int INFO_DELAY = 500;
 
 const int STOP_DISTANCE = 20; //In centimeters
@@ -99,8 +99,9 @@ void loop() {
       stopRun();
     }
     if(millis() - INFO_DELAY > mLastSentInfoTimeStamp) {
-    sendMessage("F:" + mFrontUltrasonic.Ranging(CM) +
-      " - R:" + mRearUltrasonic.Ranging(CM));
+
+    sendMessage("F: " + String(mFrontUltrasonic.Ranging(CM)));
+    sendMessage("R: " + String(mRearUltrasonic.Ranging(CM)));
     mLastSentInfoTimeStamp = millis();
     }
 
@@ -139,6 +140,10 @@ void driveControl(String command) {
   } else if (command.charAt(0) == RUN_FAST_FORWARD_SYMBOL) {
     runFastForward();
   } else if (command.charAt(0) == RUN_BACK_SYMBOL) {
+    if(mIsRunning){
+      runBack();
+      mIsRunning = false;
+    }
     runBack();
   } else if (command.charAt(0) == RUN_FORWARD_PERCENT_SYMBOL){
     runForward(command.substring(1).toInt());
@@ -149,6 +154,7 @@ void driveControl(String command) {
 }
 
 void runForward() {
+  mIsRunning = true;
   esc.writeMicroseconds(RUN_ESC_VALUE);
 }
 
