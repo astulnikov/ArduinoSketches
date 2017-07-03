@@ -10,11 +10,14 @@ const int MAX_ANGLE = 26;
 const int START_ANGLE = 4;
 const int ZERO_ANGLE = 90 + START_ANGLE;
 
-const int STOP_DISTANCE = 60; //In centimeters
+const int STOP_DISTANCE = 90; //In centimeters
+const int REVERSE_DISTANCE = 20; //In centimeters
 const int STOP_BACK_DISTANCE = 30; //In centimeters
 const int FREE_DISTANCE = 130; //In centimeters
-const int DECISION_DELAY = 100;
-const int SPEED_MEASURE_DELAY = 200;
+const int DISTANCE_THRESHOLD = 250; //In centimeters
+
+const int DECISION_DELAY = 0;
+const int SPEED_MEASURE_DELAY = 0;
 const int FAST_DRIVE_DELAY = 300;
 const int BRAKE_APPLY_INTERVAL = 30;
 const int BRAKE_APPLY_DELAY = 80;
@@ -33,6 +36,9 @@ const int STOP_ESC_VALUE = 1500;
 const int BACK_ESC_VALUE = 1650;
 const int RUN_ESC_VALUE = 1200;
 const int RUN_MAX_ESC_VALUE = 710;
+const int RUN_MIN_PERCENT = 25;
+const int MINIMAL_SPEED = 5;
+const int AFTER_STOP_PAUSE = 1000;
 
 //Steering servo
 const int SERVO_STEERING_PIN = 9;
@@ -62,7 +68,7 @@ unsigned long mSpeedMeasureTimeStamp;
 int mSpeed;
 
 boolean mIsRunning;
-int mIsWayBlocked;
+boolean mIsWayBlocked;
 int mDirection;
 float mCurrentPower;
 
@@ -85,27 +91,30 @@ void setup() {
 
 void loop() {
   // Serial.println("message: " + Serial.readStringUntil('l'));
+  if(mIsWayBlocked && mDecisionTimeStamp > millis() - AFTER_STOP_PAUSE){
+    return;
+  }
 
-    if (mDecisionTimeStamp < (millis() - DECISION_DELAY)) {
+  mIsWayBlocked = false;
 
-    int frontDistance = (measureDistance(mFrontUltrasonic) +
-      measureDistance(mFrontUltrasonic)) / 2;
+  if (mDecisionTimeStamp < (millis() - DECISION_DELAY)) {
+    int frontDistance = measureDistance(mFrontUltrasonic);
     long frontTimestamp = millis();
+
     int rearDistance = measureDistance(mRearUltrasonic);
 
-    if(mSpeedMeasureTimeStamp < (millis() - SPEED_MEASURE_DELAY) ||
-  mSpeed < 0){
+
       mSpeed = calculateSpeed(mPreviousFrontDistance, frontDistance,
-      frontTimestamp - mPrevFDistanceTimeStamp);
-      sendMessage("speed " + String(mSpeed));
+    frontTimestamp - mPrevFDistanceTimeStamp);
       mPreviousFrontDistance = frontDistance;
       mPrevFDistanceTimeStamp = frontTimestamp;
       mSpeedMeasureTimeStamp = millis();
-    }
 
-    if(millis() - INFO_DELAY > mLastSentInfoTimeStamp) {
+
+    if(mLastSentInfoTimeStamp < (millis() - INFO_DELAY)) {
       sendMessage("F: " + String(frontDistance));
       sendMessage("R: " + String(rearDistance));
+      sendMessage("Speed " + String(mSpeed));
       mLastSentInfoTimeStamp = millis();
     }
 
@@ -116,20 +125,24 @@ void loop() {
 
 int measureDistance(Ultrasonic ultrasonic){
   int firstMeasure = ultrasonic.Ranging(CM);
+  delay(5);
   int secondMeasure = ultrasonic.Ranging(CM);
   if(firstMeasure == 0){
-    return secondMeasure;
-  } else if(secondMeasure == 0){
-    return firstMeasure;
-  } else {
-    return (firstMeasure + secondMeasure) / 2;
+    firstMeasure = 300;
   }
+  if(secondMeasure == 0){
+    secondMeasure = 300;
+  }
+
+  if(firstMeasure - secondMeasure > DISTANCE_THRESHOLD ||
+secondMeasure - firstMeasure > DISTANCE_THRESHOLD){
+    sendMessage("Recursion");
+    return measureDistance(ultrasonic);
+  }
+  return (firstMeasure + secondMeasure) / 2;
 }
 
 int calculateSpeed(int s1, int s2, long timeDiff){
-  if(s1 == 0){
-    s1 = 300;
-  }
   int speed = (int) (s1 - s2) / (timeDiff / 1000.0f);
   if(speed < 0){
     speed = 0;
@@ -154,26 +167,43 @@ void turnToAngle(int angle) {
 }
 
 void chooseDirection(int frontDistance, int rearDistance) {
-  if(frontDistance > FREE_DISTANCE || frontDistance == 0){
+  if(frontDistance > FREE_DISTANCE){
     turnToAngle(ZERO_ANGLE);
     runForward(40);
   } else if(frontDistance < STOP_DISTANCE){
-    stopRun();
+
     checkBreaks();
+
+    if(mSpeed == 0 &&
+      frontDistance <= REVERSE_DISTANCE &&
+      rearDistance > REVERSE_DISTANCE){
+      turnToAngle(70);
+      runBack(80);
+    } else if(mSpeed < MINIMAL_SPEED &&
+    frontDistance > REVERSE_DISTANCE){
+      turnToAngle(ZERO_ANGLE);
+      runForward(25);
+    } else{
+      stopRun();
+    }
   } else {
     reactOnFrontDistance(frontDistance);
   }
 }
 
 void checkBreaks(){
-  if(mSpeed > 40){
-    sendMessage("STOP");
-    apllyBrakesBack();
-    if(mSpeed > 100){
+  if(mSpeed > MINIMAL_SPEED){
+    mIsWayBlocked = true;
+    stopRun();
+    if(mSpeed > 15){
+      sendMessage("---------------- STOP");
+      apllyBrakesBack();
+    }
+    if(mSpeed > 50){
       sendMessage("---------------- apllyBrakesBack again");
       apllyBrakesBack();
     }
-    if(mSpeed > 300){
+    if(mSpeed > 180){
       sendMessage("---------------- apllyBrakesBack For Sure");
       apllyBrakesBack();
     }
@@ -182,24 +212,26 @@ void checkBreaks(){
 }
 
 void reactOnFrontDistance(int distance){
+  turnToAngle(ZERO_ANGLE);
   if(distance - STOP_DISTANCE > 0){
     int power = (distance - STOP_DISTANCE) / 2.5f;
-    if(power < 25){
-      power = 25;
+    if(power < RUN_MIN_PERCENT){
+      power = RUN_MIN_PERCENT;
     }
     runForward(power);
   }
 }
 
 void runForward(int percent) {
+  percent = 25;
   sendMessage("Run Forward Power" + String(percent));
   mCurrentPower = percent;
   int power = STOP_ESC_VALUE - (STOP_ESC_VALUE - RUN_MAX_ESC_VALUE) / 100.0 * percent;
-  if(!mIsRunning){
+  if(!mIsRunning || mDirection == DIRECTION_BACKWARD){
     esc.writeMicroseconds(power);
-    delay(50);
+    delay(60);
     esc.writeMicroseconds(STOP_ESC_VALUE);
-    delay(50);
+    delay(60);
   }
   mIsRunning = true;
   mDirection = DIRECTION_FORWARD;
