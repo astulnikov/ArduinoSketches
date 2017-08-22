@@ -9,15 +9,32 @@
 #define IR A8
 #define IR_MODEL 1080
 
+const char CHECK_SYMBOL = 'c';
+const char END_LINE_SYMBOL = 'l';
+const char STEERING_SYMBOL = 's';
+const char DRIVE_SYMBOL = 'd';
+
+const String HEADING_SYMBOL = "h";
+const String TEMP_SYMBOL = "t";
+const String SPEED_SYMBOL = "s";
+const String DISTANCE_SYMBOL = "d";
+const String REAR_DISTANCE_SYMBOL = "r";
+
+const char RUN_FORWARD_SYMBOL = '1';
+const char RUN_FORWARD_PERCENT_SYMBOL = '3';
+const char RUN_BACK_SYMBOL = '2';
+const char STOP_SYMBOL = '0';
+
+const float WHEEL_RADIUS = 0.032; //meters
 const long ONE_MINUTE = 60000;
 const int MAX_SPEED_FORWARD = 255;
 //distance servo
 const int SERVO_PIN = 10;
 
-AF_DCMotor motorLF(1); // create motor #1
-AF_DCMotor motorLR(2); // create motor #2
-AF_DCMotor motorRF(4); // create motor #4
-AF_DCMotor motorRR(3); // create motor #3
+AF_DCMotor motorLF(4); // create motor #4
+AF_DCMotor motorLR(3); // create motor #3
+AF_DCMotor motorRF(1); // create motor #1
+AF_DCMotor motorRR(2); // create motor #2
 
 volatile int mTicksLeft;
 volatile int mTicksRight;
@@ -34,7 +51,9 @@ void setup() {
   Wire.begin();
   delay(10);
 
-  Serial.begin(9600);           // set up Serial library at 9600 bps
+  // set up Serial library at 9600 bps
+  Serial.begin(9600);
+  Serial2.begin(9600);
 
   Serial.println("Prepare Motors!");
   motorLF.setSpeed(MAX_SPEED_FORWARD);     // set the speed up to 255
@@ -52,16 +71,77 @@ void setup() {
   Serial.println("Attach Servo");
   mDistanceServo.attach(SERVO_PIN);
   mDistanceServo.write(65);
+
+  delay(2000);
 }
 
 void loop() {
-  delay(500);
+  if (Serial.available() > 0) {
+    byte incomingByte = Serial.read();
+    if (incomingByte == CHECK_SYMBOL) {
+      readMessage();
+    }
+  }
+
+  delay(3000);
 
   printRpms();
   stop();
 
   printSensorsData();
-  scan();
+  // scan();
+
+  // Serial.print("Distance: ");
+  // Serial.println(getIRDistance());
+}
+
+void readMessage() {
+  String message = Serial.readStringUntil(END_LINE_SYMBOL);
+  chooseAction(message);
+}
+
+void chooseAction(String data) {
+  char command = data.charAt(0);
+  if (command == STEERING_SYMBOL) {
+    String angle = data.substring(1);
+    turnToAngle(angle.toInt());
+    Serial.println("steer " + angle);
+  } else if (command == DRIVE_SYMBOL) {
+    driveControl(data.substring(1));
+  }
+}
+
+void sendMessage(String message) {
+  Serial.println(String(CHECK_SYMBOL) + message + String(END_LINE_SYMBOL));
+}
+
+void sendMessage(int message) {
+  sendMessage(String(message));
+}
+
+void sendDistanceArray(byte bytes[], int size) {
+    Serial.print(CHECK_SYMBOL);
+    Serial.print(DISTANCE_SYMBOL);
+    Serial.write(bytes, size);
+    Serial.print(END_LINE_SYMBOL);
+}
+
+void driveControl(String command) {
+  char driveCommand = command.charAt(0);
+  if (driveCommand == RUN_FORWARD_SYMBOL) {
+    runForward(80);
+    Serial.println("drive");
+  } else if (driveCommand == RUN_BACK_SYMBOL) {
+    runBackward();
+    Serial.println("drive back");
+  } else if (driveCommand == RUN_FORWARD_PERCENT_SYMBOL){
+    String power = command.substring(1);
+    runForward(power.toInt());
+    Serial.println("power " + power);
+  } else {
+    stop();
+    Serial.println("stop drive");
+  }
 }
 
 void runForward(int power){
@@ -112,6 +192,30 @@ void turnLeft(){
   motorRR.run(FORWARD);
 }
 
+void turnToAngle(int angle){
+  Serial.print("----- Turn to Angle: ");
+  Serial.println(angle);
+  float currentAngle = getHeading();
+  float targetAngle = currentAngle + angle;
+  if(angle < 0){
+    while(currentAngle >= targetAngle){
+      turnLeft();
+      delay(50);
+      currentAngle = getHeading();
+      Serial.print("Current Angle: ");
+      Serial.println(currentAngle);
+    }
+  } else if(angle > 0){
+    while(currentAngle <= targetAngle){
+      turnRight();
+      delay(50);
+      currentAngle = getHeading();
+      Serial.print("Current Angle: ");
+      Serial.println(currentAngle);
+    }
+  }
+}
+
 void printRpms(){
   Serial.print("RPM left: ");
   int rpmLeft = getRPMLeft();
@@ -119,6 +223,13 @@ void printRpms(){
   Serial.print("RPM right: ");
   int rpmRight = getRPMRight();
   Serial.println(rpmRight);
+  float speed = getSpeed(rpmLeft, rpmRight);
+  sendMessage(SPEED_SYMBOL + speed);
+}
+
+float getSpeed(int rpmLeft, int rpmRight){
+  int averageRpm = (rpmLeft + rpmRight) / 2;
+  return averageRpm * WHEEL_RADIUS * 0.10472;
 }
 
 int getRPMLeft(){
@@ -187,14 +298,14 @@ void printSensorsData(){
 
   Serial.print  ( " Temp:" );
   Serial.println( gt );
+  sendMessage(TEMP_SYMBOL + gt);
 
   Serial.print  ( " Heading:" );
   Serial.println( getHeading() );
+  sendMessage(HEADING_SYMBOL + getHeading());
 
+  Serial.print  ( " Compensated Heading:" );
   Serial.println(getCompensatedHeading());
-
-  // Serial.print("Distance: ");
-  // Serial.println(getIRDistance());
 }
 
 float getHeading(){
@@ -230,9 +341,9 @@ float getCompensatedHeading(){
 }
 
 int getIRDistance(){
-  unsigned long pepe1=millis();  // takes the time before the loop on the library begins
+  // unsigned long pepe1=millis();  // takes the time before the loop on the library begins
   int dis=SharpIR.distance();  // this returns the distance to the object you're measuring
-  unsigned long pepe2=millis()-pepe1;  // the following gives you the time taken to get the measurement
+  // unsigned long pepe2=millis()-pepe1;  // the following gives you the time taken to get the measurement
 
   // Serial.print("Time taken (ms): ");
   // Serial.println(pepe2);
@@ -240,82 +351,49 @@ int getIRDistance(){
 }
 
 void scan(){
-  int distances[90];
+  byte distances[110];
 
-  for (int pos = 20; pos <= 110; pos++) {
+  for (int pos = 10; pos <= 120; pos++) {
     mDistanceServo.write(pos);
-    delay(5);
-    distances[pos - 20] = getIRDistance();
+    delay(3);
+    distances[pos - 10] = getIRDistance();
+
+    Serial.print("Distance: ");
+    Serial.println(distances[pos - 10]);
   }
 
-  mDistanceServo.write(20);
+  sendDistanceArray(distances, 110);
 
-  int lowestAngle = 0;
-  int lowestDistance = 0;
-  for(int i = 60; i <= 70; i++){
-      if(lowestDistance > distances[i]){
-        lowestDistance = distances[i];
-        lowestAngle = i;
-      }
-  }
-  turnToAngle(lowestAngle - 65);
-  // int lowestCenter = 100;
-  // for(int i = 60; i <= 70; i++){
-  //     if(lowestCenter > distances[i]){
-  //       lowestCenter = distances[i];
+  mDistanceServo.write(10);
+
+  // int lowestDistance = 100;
+  // for(int i = 35; i <= 55; i++){
+  //     if(lowestDistance > distances[i]){
+  //       lowestDistance = distances[i];
   //     }
   // }
-  //
-  // int lowestLeft = 100;
-  // for(int i = 20; i < 60; i++){
-  //     if(lowestLeft > distances[i]){
-  //       lowestLeft = distances[i];
-  //     }
-  // }
-  //
-  // int lowestRight = 100;
-  // for(int i = 71; i <= 110; i++){
-  //     if(lowestRight > distances[i]){
-  //       lowestRight = distances[i];
-  //     }
-  // }
-  // Serial.print("Left: ");
-  // Serial.println(lowestLeft);
-  // Serial.print("Center: ");
-  // Serial.println(lowestCenter);
-  // Serial.print("Right: ");
-  // Serial.println(lowestRight);
-  // if(lowestLeft < 10 || lowestRight < 10 || lowestRight < 10){
+  // if(lowestDistance < 20){
+  //   Serial.print("Distance: ");
+  //   Serial.println(lowestDistance);
   //   runBackward();
-  // } else if(lowestCenter > 40){
-  //   runForward(100);
-  // } else if(lowestCenter >= lowestLeft && lowestCenter >= lowestRight){
-  //   runForward(80);
-  // } else if(lowestLeft >= lowestRight){
-  //   turnLeft();
-  // } else {
-  //   turnRight();
+  //   return;
   // }
-}
-
-void turnToAngle(int angle){
-  float currentAngle = getCompensatedHeading();
-  float targetAngle = currentAngle + angle;
-  if(angle < 0){
-    while(currentAngle >= targetAngle){
-      turnLeft();
-      delay(100);
-      currentAngle = getCompensatedHeading();
-      Serial.print("Current Angle: ");
-      Serial.println(currentAngle);
-    }
-  } else if(angle > 0){
-    while(currentAngle <= targetAngle){
-      turnRight();
-      delay(100);
-      currentAngle = getCompensatedHeading();
-      Serial.print("Current Angle: ");
-      Serial.println(currentAngle);
-    }
-  }
+  //
+  // if(lowestDistance > 70){
+  //   runForward(100);
+  //   return;
+  // }
+  //
+  // int largestAngle = 0;
+  // int largestDistance = 0;
+  // for(int i = 0; i <= 90; i++){
+  //     if(largestDistance < distances[i]){
+  //       largestDistance = distances[i];
+  //       largestAngle = i;
+  //     }
+  // }
+  // turnToAngle(largestAngle - 45);
+  // if(largestDistance > 20){
+  //   runForward(70);
+  // }
 }
