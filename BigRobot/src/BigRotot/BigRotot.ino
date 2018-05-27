@@ -1,18 +1,33 @@
+#include <SharpIR.h>
+
 #include <AFMotor.h>
 #include "Wire.h"
 
 #include "GY_85.h"
 #include "SharpIR.h"
-#include "Ultrasonic.h"
+#include "NewPing.h"
 #include <Servo.h>
 
 #define IR A8
 #define IR_MODEL 1080
 
+const int DISTANCE_THRESHOLD = 250; //In centimeters
+
 const char CHECK_SYMBOL = 'c';
 const char END_LINE_SYMBOL = 'l';
 const char STEERING_SYMBOL = 's';
 const char DRIVE_SYMBOL = 'd';
+
+
+const byte CHECK_CODE = 20;
+const byte END_LINE_CODE = 10;
+const byte STEERING_CODE = 3;
+const byte RUN_STOP_CODE = 0;
+const byte RUN_FORWARD_CODE = 1;
+const byte RUN_BACKWARD_CODE = 2;
+const byte TURN_TO_ANGLE_CODE = 3;
+
+const byte REAR_DISTANCE_CODE = 3;
 
 const String HEADING_SYMBOL = "h";
 const String TEMP_SYMBOL = "t";
@@ -31,6 +46,10 @@ const int MAX_SPEED_FORWARD = 255;
 //distance servo
 const int SERVO_PIN = 10;
 
+//rear distance sensor
+const int REAR_TRIG_PIN = 28;
+const int REAR_ECHO_PIN = 29;
+
 AF_DCMotor motorLF(4); // create motor #4
 AF_DCMotor motorLR(3); // create motor #3
 AF_DCMotor motorRF(1); // create motor #1
@@ -47,6 +66,8 @@ Servo mDistanceServo;
 int mDistanceServoAngle;
 int mDistanceServoAngleDiff = 5;
 
+NewPing mRearUltrasonic(REAR_TRIG_PIN, REAR_ECHO_PIN, 300);
+
 void setup() {
   Wire.begin();
   delay(10);
@@ -56,34 +77,47 @@ void setup() {
   Serial2.begin(9600);
 
   Serial.println("Prepare Motors!");
+  Serial2.println("Prepare Motors!");
   motorLF.setSpeed(MAX_SPEED_FORWARD);     // set the speed up to 255
   motorLR.setSpeed(MAX_SPEED_FORWARD);     // set the speed up to 255
   motorRF.setSpeed(MAX_SPEED_FORWARD);     // set the speed up to 255
   motorRR.setSpeed(MAX_SPEED_FORWARD);     // set the speed up to 255
 
   Serial.println("Attaching Interrupts for speed measure...");
+  Serial2.println("Attaching Interrupts for speed measure...");
   attachInterrupt(4, diskInterruptLeft, RISING);
   attachInterrupt(5, diskInterruptRight, RISING);
 
   Serial.println("Init Accelerometr!");
+  Serial2.println("Init Accelerometr!");
   GY85.init();
 
   Serial.println("Attach Servo");
+  Serial2.println("Attach Servo");
   mDistanceServo.attach(SERVO_PIN);
   mDistanceServo.write(65);
 
   delay(2000);
 }
 
+void sendAsByteArr(unsigned long value){
+  byte buf[sizeof(unsigned long)];
+  buf[3] = (int)(value & 0XFF);
+  buf[2] = (int)((value >> 8) & 0XFF);
+  buf[1] = (int)((value >> 16) & 0xFF);
+  buf[0] = (int)((value >> 24) & 0xFF);
+  Serial2.write(buf, sizeof(buf));
+}
+
 void loop() {
   if (Serial.available() > 0) {
     byte incomingByte = Serial.read();
-    if (incomingByte == CHECK_SYMBOL) {
+    if (incomingByte == CHECK_CODE) {
       readMessage();
     }
   }
 
-  delay(3000);
+  delay(500);
 
   printRpms();
   stop();
@@ -96,8 +130,35 @@ void loop() {
 }
 
 void readMessage() {
-  String message = Serial.readStringUntil(END_LINE_SYMBOL);
-  chooseAction(message);
+  byte data[256];
+  Serial.readBytesUntil(END_LINE_CODE, data, 256);
+  chooseAction(data);
+}
+
+union ArrayToInteger {
+  byte array[4];
+  uint32_t integer;
+};
+
+void chooseAction(byte data[]) {
+    byte command = data[0];
+    switch (command) {
+      case RUN_FORWARD_CODE:
+        runForward(80);
+        break;
+      case RUN_BACKWARD_CODE:
+        runBackward();
+        break;
+      case RUN_STOP_CODE:
+        stop();
+        break;
+      case TURN_TO_ANGLE_CODE:
+        ArrayToInteger converter = {data[1], data[2], data[3], data[4]};
+        int angle = converter.integer;
+        turnToAngle(angle);
+        Serial.println("steer " + angle);
+        break;
+    }
 }
 
 void chooseAction(String data) {
@@ -300,12 +361,19 @@ void printSensorsData(){
   Serial.println( gt );
   sendMessage(TEMP_SYMBOL + gt);
 
-  Serial.print  ( " Heading:" );
+  Serial.print  ( " Heading: " );
   Serial.println( getHeading() );
   sendMessage(HEADING_SYMBOL + getHeading());
 
   Serial.print  ( " Compensated Heading:" );
   Serial.println(getCompensatedHeading());
+
+  int rearDistance = mRearUltrasonic.convert_cm(mRearUltrasonic.ping_median(5));
+  Serial.print  ( " Rear Distance: " );
+  Serial.println(rearDistance);
+  Serial2.write(REAR_DISTANCE_CODE);
+  sendAsByteArr(rearDistance);
+  sendMessage(REAR_DISTANCE_SYMBOL + rearDistance);
 }
 
 float getHeading(){
@@ -348,6 +416,25 @@ int getIRDistance(){
   // Serial.print("Time taken (ms): ");
   // Serial.println(pepe2);
   return dis;
+}
+
+int measureDistance(NewPing ultrasonic){
+  int firstMeasure = ultrasonic.ping_cm();
+  delay(5);
+  int secondMeasure = ultrasonic.ping_cm();
+  if(firstMeasure == 0){
+    firstMeasure = 300;
+  }
+  if(secondMeasure == 0){
+    secondMeasure = 300;
+  }
+
+  if(firstMeasure - secondMeasure > DISTANCE_THRESHOLD ||
+secondMeasure - firstMeasure > DISTANCE_THRESHOLD){
+    sendMessage("Recursion");
+    return measureDistance(ultrasonic);
+  }
+  return (firstMeasure + secondMeasure) / 2;
 }
 
 void scan(){

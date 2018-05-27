@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 const int MAX_SPEED_FORWARD = 250;
 const int MAX_SPEED_BACKWARD = 10;
 

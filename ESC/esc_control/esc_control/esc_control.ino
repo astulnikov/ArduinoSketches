@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 #include <Servo.h>
 
 Servo esc;
@@ -11,7 +13,7 @@ void setup() {
 }
 
 void loop() {
-  
+
   if (Serial.available() > 0) {
     throttle = Serial.parseInt();
     Serial.print("I received: ");

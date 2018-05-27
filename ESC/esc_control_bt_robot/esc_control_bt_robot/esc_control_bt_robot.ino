@@ -16,8 +16,8 @@ const char RUN_FORWARD_PERCENT_SYMBOL = '4';
 const char RUN_BACK_SYMBOL = '2';
 const char STOP_SYMBOL = '0';
 
-const int READ_MESSAGE_DELAY = 3;
-const int COMMAND_DELAY = 300;
+const int READ_MESSAGE_DELAY = 1000;
+const int COMMAND_DELAY = 1000;
 const int INFO_DELAY = 500;
 
 const int STOP_DISTANCE = 20; //In centimeters
@@ -64,12 +64,10 @@ Ultrasonic mFrontUltrasonic(TRIG_PIN, ECHO_PIN);
 Ultrasonic mRearUltrasonic(REAR_TRIG_PIN, REAR_ECHO_PIN);
 
 char incomingByte;
-int attemptCount;
-String bufferString = "";
 
 unsigned long mDriveStartTime;
 unsigned long mTime;
-unsigned long mLastDriveCommandTimeStamp;
+unsigned long mLastCommandTimeStamp;
 unsigned long mLastSentInfoTimeStamp;
 boolean mIsRobotMode;
 boolean mIsRunning;
@@ -95,7 +93,7 @@ void loop() {
       }
     }
 
-    if(millis() - COMMAND_DELAY > mLastDriveCommandTimeStamp) {
+    if(millis() - COMMAND_DELAY > mLastCommandTimeStamp) {
       stopRun();
     }
     if(millis() - INFO_DELAY > mLastSentInfoTimeStamp) {
@@ -114,43 +112,52 @@ void loop() {
 }
 
 void readMessage() {
-  String message = Serial.readString();
+  String message = Serial.readStringUntil(END_LINE_SYMBOL);
 
   chooseAction(message);
 
-  String approveString = String(APPROVE_SYMBOL);
-  String approveMessage = String(approveString + message);
-  sendMessage(message);
+  // String approveString = String(APPROVE_SYMBOL);
+  // String approveMessage = String(approveString + message);
+  // sendMessage(message);
 }
 
 void chooseAction(String data) {
-  if (data.charAt(0) == STEERING_SYMBOL) {
+  char command = data.charAt(0);
+  if (command == STEERING_SYMBOL) {
     String angle = data.substring(1);
     turnToAngle(START_ANGLE + angle.toInt());
-  } else if (data.charAt(0) == DRIVE_SYMBOL) {
+    sendMessage("steer " + angle);
+  } else if (command == DRIVE_SYMBOL) {
     driveControl(data.substring(1));
-  } else if (data.charAt(0) == ROBOT_SYMBOL) {
+  } else if (command == ROBOT_SYMBOL) {
     setRobotMode(!mIsRobotMode);
   }
+  mLastCommandTimeStamp = millis();
 }
 
 void driveControl(String command) {
-  if (command.charAt(0) == RUN_FORWARD_SYMBOL) {
+  char driveCommand = command.charAt(0);
+  if (driveCommand == RUN_FORWARD_SYMBOL) {
     runForward();
-  } else if (command.charAt(0) == RUN_FAST_FORWARD_SYMBOL) {
+    sendMessage("drive");
+  } else if (driveCommand == RUN_FAST_FORWARD_SYMBOL) {
     runFastForward();
-  } else if (command.charAt(0) == RUN_BACK_SYMBOL) {
+    sendMessage("drive fast");
+  } else if (driveCommand == RUN_BACK_SYMBOL) {
     if(mIsRunning){
       runBack();
       mIsRunning = false;
     }
     runBack();
-  } else if (command.charAt(0) == RUN_FORWARD_PERCENT_SYMBOL){
-    runForward(command.substring(1).toInt());
+    sendMessage("drive back");
+  } else if (driveCommand == RUN_FORWARD_PERCENT_SYMBOL){
+    String power = command.substring(1);
+    runForward(power.toInt());
+    sendMessage("power " + power);
   } else {
     stopRun();
+    sendMessage("stop drive");
   }
-  mLastDriveCommandTimeStamp = millis();
 }
 
 void runForward() {
@@ -163,7 +170,7 @@ void runFastForward() {
 }
 
 void runForward(int percent) {
-  int power = RUN_MAX_ESC_VALUE / 100 * percent;
+  int power = STOP_ESC_VALUE - (STOP_ESC_VALUE - RUN_MAX_ESC_VALUE) / 100.0 * percent;
   esc.writeMicroseconds(power);
 }
 

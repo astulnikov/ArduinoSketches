@@ -1,9 +1,11 @@
-int ledPin = 13;MM
-int trigPin = 33;
-int echoPin = 32;
+#include <Arduino.h>
+
+int ledPin = 13;
+int trigPin = 11;
+int echoPin = 12;
 
 long distance;
-int ledLevel; 
+int ledLevel;
 
 void setup()  {
   pinMode(trigPin,OUTPUT);
@@ -11,13 +13,13 @@ void setup()  {
   Serial.begin(9600);
 }
 
-void loop()  { 
+void loop()  {
   distance = getDistance();
   Serial.print(distance);
   Serial.print(", ");
   ledBlink(distance);
   delay(100);
-} 
+}
 
 void ledBlink(int time) {
   digitalWrite(ledPin, HIGH);
@@ -32,12 +34,11 @@ long getEchoTiming() {
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
-  long duration = pulseIn(echoPin,HIGH);
+  long duration = pulseIn(echoPin,HIGH, 30000);
   return duration;
-} 
+}
 
 long getDistance() {
   long distacne_cm = getEchoTiming()/29/2;
   return distacne_cm;
 }
-

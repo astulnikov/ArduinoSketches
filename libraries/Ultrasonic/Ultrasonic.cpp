@@ -8,6 +8,8 @@
 #include "Arduino.h"
 #include "Ultrasonic.h"
 
+const long PULSE_TIMEOUT = 30000;
+
 Ultrasonic::Ultrasonic(int TP, int EP)
 {
    pinMode(TP,OUTPUT);
@@ -23,7 +25,7 @@ long Ultrasonic::Timing()
   digitalWrite(Trig_pin, HIGH);
   delayMicroseconds(10);
   digitalWrite(Trig_pin, LOW);
-  duration = pulseIn(Echo_pin,HIGH);
+  duration = pulseIn(Echo_pin,HIGH,PULSE_TIMEOUT);
   return duration;
 }
 
