@@ -21,7 +21,7 @@ const char RUN_BACK_SYMBOL = '2';
 const char STOP_SYMBOL = '0';
 
 const int MAX_ANGLE = 26;
-const int START_ANGLE = 4;
+const int START_ANGLE = -11;
 const int ZERO_ANGLE = 90 + START_ANGLE;
 
 const int STOP_DISTANCE = 90; //In centimeters
@@ -39,7 +39,7 @@ const int DRIVE_BACK_DELAY = 1500;
 
 const int READ_MESSAGE_DELAY = 1000;
 const int COMMAND_DELAY = 1000;
-const int INFO_DELAY = 500;
+const int INFO_DELAY = 100;
 
 const int DIRECTION_NO = 0;
 const int DIRECTION_FORWARD = 1;
@@ -261,8 +261,7 @@ void makeDecision(){
 
     int rearDistance = measureDistance(mRearUltrasonic);
 
-    mSpeed = calculateSpeed(mPreviousFrontDistance, frontDistance,
-  frontTimestamp - mPrevFDistanceTimeStamp);
+    mSpeed = calculateSpeed(mPreviousFrontDistance, frontDistance, frontTimestamp - mPrevFDistanceTimeStamp);
     mPreviousFrontDistance = frontDistance;
     mPrevFDistanceTimeStamp = frontTimestamp;
     mSpeedMeasureTimeStamp = millis();
@@ -280,9 +279,9 @@ void makeDecision(){
 }
 
 int measureDistance(Ultrasonic ultrasonic){
-  int firstMeasure = ultrasonic.Ranging(CM);
+  int firstMeasure = ultrasonic.read(CM);
   delay(5);
-  int secondMeasure = ultrasonic.Ranging(CM);
+  int secondMeasure = ultrasonic.read(CM);
   if(firstMeasure == 0){
     firstMeasure = 300;
   }
@@ -371,7 +370,6 @@ void reactOnFrontDistance(int distance){
 }
 
 void runForward(int percent) {
-  // percent = 25;
   sendMessage("Run Forward Power" + String(percent));
   mCurrentPower = percent;
   int power = STOP_ESC_VALUE - (STOP_ESC_VALUE - RUN_MAX_ESC_VALUE) / 100.0 * percent;
@@ -389,6 +387,7 @@ void runForward(int percent) {
 
 void runBack(int percent) {
   sendMessage("Run Back Power" + String(percent));
+  mCurrentPower = percent;
   mIsRunning = true;
   mDirection = DIRECTION_BACKWARD;
   moveBack(percent);
