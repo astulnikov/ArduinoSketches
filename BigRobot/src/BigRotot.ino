@@ -1,12 +1,10 @@
-#include <SharpIR.h>
-
-#include <AFMotor.h>
+#include "AFMotor.h"
 #include "Wire.h"
 
 #include "GY_85.h"
 #include "SharpIR.h"
 #include "NewPing.h"
-#include <Servo.h>
+#include "Servo.h"
 
 #define IR A8
 #define IR_MODEL 1080
@@ -27,7 +25,10 @@ const byte RUN_FORWARD_CODE = 1;
 const byte RUN_BACKWARD_CODE = 2;
 const byte TURN_TO_ANGLE_CODE = 3;
 
+const byte SPEED_CODE = 1;
+const byte FRONT_DISTANCE_CODE = 2;
 const byte REAR_DISTANCE_CODE = 3;
+const byte HEADING_CODE = 4;
 
 const String HEADING_SYMBOL = "h";
 const String TEMP_SYMBOL = "t";
@@ -74,30 +75,41 @@ void setup() {
 
   // set up Serial library at 9600 bps
   Serial.begin(9600);
-  Serial2.begin(9600);
+  Serial3.begin(9600);
 
   Serial.println("Prepare Motors!");
-  Serial2.println("Prepare Motors!");
+  Serial3.println("Prepare Motors!");
   motorLF.setSpeed(MAX_SPEED_FORWARD);     // set the speed up to 255
   motorLR.setSpeed(MAX_SPEED_FORWARD);     // set the speed up to 255
   motorRF.setSpeed(MAX_SPEED_FORWARD);     // set the speed up to 255
   motorRR.setSpeed(MAX_SPEED_FORWARD);     // set the speed up to 255
 
   Serial.println("Attaching Interrupts for speed measure...");
-  Serial2.println("Attaching Interrupts for speed measure...");
+  Serial3.println("Attaching Interrupts for speed measure...");
   attachInterrupt(4, diskInterruptLeft, RISING);
   attachInterrupt(5, diskInterruptRight, RISING);
 
   Serial.println("Init Accelerometr!");
-  Serial2.println("Init Accelerometr!");
+  Serial3.println("Init Accelerometr!");
   GY85.init();
 
   Serial.println("Attach Servo");
-  Serial2.println("Attach Servo");
+  Serial3.println("Attach Servo");
   mDistanceServo.attach(SERVO_PIN);
   mDistanceServo.write(65);
 
   delay(2000);
+}
+
+typedef union {
+ float floatingPoint;
+ byte binary[4];
+} binaryFloat;
+
+void sendFloatAsByteArr(float value){
+  binaryFloat hi;
+  hi.floatingPoint = value;
+  Serial3.write(hi.binary, sizeof(hi.binary));
 }
 
 void sendAsByteArr(unsigned long value){
@@ -106,23 +118,20 @@ void sendAsByteArr(unsigned long value){
   buf[2] = (int)((value >> 8) & 0XFF);
   buf[1] = (int)((value >> 16) & 0xFF);
   buf[0] = (int)((value >> 24) & 0xFF);
-  Serial2.write(buf, sizeof(buf));
+  Serial3.write(buf, sizeof(buf));
 }
 
 void loop() {
-  if (Serial.available() > 0) {
-    byte incomingByte = Serial.read();
-    if (incomingByte == CHECK_CODE) {
-      readMessage();
-    }
+  if (Serial3.available() > 0) {
+    readMessage();
   }
 
-  delay(500);
+  delay(50);
 
-  printRpms();
-  stop();
+  // printRpms();
+  // stop();
 
-  printSensorsData();
+  // printSensorsData();
   // scan();
 
   // Serial.print("Distance: ");
@@ -131,7 +140,7 @@ void loop() {
 
 void readMessage() {
   byte data[256];
-  Serial.readBytesUntil(END_LINE_CODE, data, 256);
+  Serial3.readBytesUntil(END_LINE_CODE, data, 256);
   chooseAction(data);
 }
 
@@ -286,6 +295,9 @@ void printRpms(){
   Serial.println(rpmRight);
   float speed = getSpeed(rpmLeft, rpmRight);
   sendMessage(SPEED_SYMBOL + speed);
+
+  Serial3.write(SPEED_CODE);
+  sendAsByteArr(speed);
 }
 
 float getSpeed(int rpmLeft, int rpmRight){
@@ -371,9 +383,16 @@ void printSensorsData(){
   int rearDistance = mRearUltrasonic.convert_cm(mRearUltrasonic.ping_median(5));
   Serial.print  ( " Rear Distance: " );
   Serial.println(rearDistance);
-  Serial2.write(REAR_DISTANCE_CODE);
-  sendAsByteArr(rearDistance);
   sendMessage(REAR_DISTANCE_SYMBOL + rearDistance);
+
+  Serial3.write(REAR_DISTANCE_CODE);
+  sendAsByteArr(rearDistance);
+
+  delay(5L);
+
+  float heading = getCompensatedHeading();
+  Serial3.write(HEADING_CODE);
+  sendFloatAsByteArr(heading);
 }
 
 float getHeading(){
@@ -410,7 +429,7 @@ float getCompensatedHeading(){
 
 int getIRDistance(){
   // unsigned long pepe1=millis();  // takes the time before the loop on the library begins
-  int dis=SharpIR.distance();  // this returns the distance to the object you're measuring
+  int dis=SharpIR.getDistance();  // this returns the distance to the object you're measuring
   // unsigned long pepe2=millis()-pepe1;  // the following gives you the time taken to get the measurement
 
   // Serial.print("Time taken (ms): ");

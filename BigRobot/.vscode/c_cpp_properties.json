@@ -1,0 +1,72 @@
+{
+    "configurations": [
+        {
+            "name": "!!! WARNING !!! AUTO-GENERATED FILE, PLEASE DO NOT MODIFY IT AND USE https://docs.platformio.org/page/projectconf/section_env_build.html#build-flags"
+        },
+        {
+            "name": "Mac",
+            "macFrameworkPath": [],
+            "includePath": [
+                "/Users/aliaksei.stulnikau/ArduinoProjects/ArduinoSketches/BigRobot/include",
+                "/Users/aliaksei.stulnikau/ArduinoProjects/ArduinoSketches/BigRobot/src",
+                "/Users/aliaksei.stulnikau/Documents/Arduino/Libraries/SharpIR/src",
+                "/Users/aliaksei.stulnikau/Documents/Arduino/Libraries/Servo/src",
+                "/Users/aliaksei.stulnikau/Documents/Arduino/Libraries/NewPing/src",
+                "/Users/aliaksei.stulnikau/Documents/Arduino/Libraries/GY_85/src",
+                "/Users/aliaksei.stulnikau/.platformio/packages/framework-arduino-avr/libraries/Wire/src",
+                "/Users/aliaksei.stulnikau/Documents/Arduino/Libraries/Adafruit_Motor_Shield_library",
+                "/Users/aliaksei.stulnikau/.platformio/packages/framework-arduino-avr/cores/arduino",
+                "/Users/aliaksei.stulnikau/.platformio/packages/framework-arduino-avr/variants/mega",
+                "/Users/aliaksei.stulnikau/Documents/Arduino/Libraries/SparkFun_BNO080_Cortex_Based_IMU/src",
+                "/Users/aliaksei.stulnikau/Documents/Arduino/Libraries/Ultrasonic/src",
+                "/Users/aliaksei.stulnikau/.platformio/packages/framework-arduino-avr/libraries/EEPROM/src",
+                "/Users/aliaksei.stulnikau/.platformio/packages/framework-arduino-avr/libraries/HID/src",
+                "/Users/aliaksei.stulnikau/.platformio/packages/framework-arduino-avr/libraries/SPI/src",
+                "/Users/aliaksei.stulnikau/.platformio/packages/framework-arduino-avr/libraries/SoftwareSerial/src",
+                "/Users/aliaksei.stulnikau/.platformio/packages/tool-unity",
+                ""
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [
+                    "/Users/aliaksei.stulnikau/ArduinoProjects/ArduinoSketches/BigRobot/include",
+                    "/Users/aliaksei.stulnikau/ArduinoProjects/ArduinoSketches/BigRobot/src",
+                    "/Users/aliaksei.stulnikau/Documents/Arduino/Libraries/SharpIR/src",
+                    "/Users/aliaksei.stulnikau/Documents/Arduino/Libraries/Servo/src",
+                    "/Users/aliaksei.stulnikau/Documents/Arduino/Libraries/NewPing/src",
+                    "/Users/aliaksei.stulnikau/Documents/Arduino/Libraries/GY_85/src",
+                    "/Users/aliaksei.stulnikau/.platformio/packages/framework-arduino-avr/libraries/Wire/src",
+                    "/Users/aliaksei.stulnikau/Documents/Arduino/Libraries/Adafruit_Motor_Shield_library",
+                    "/Users/aliaksei.stulnikau/.platformio/packages/framework-arduino-avr/cores/arduino",
+                    "/Users/aliaksei.stulnikau/.platformio/packages/framework-arduino-avr/variants/mega",
+                    "/Users/aliaksei.stulnikau/Documents/Arduino/Libraries/SparkFun_BNO080_Cortex_Based_IMU/src",
+                    "/Users/aliaksei.stulnikau/Documents/Arduino/Libraries/Ultrasonic/src",
+                    "/Users/aliaksei.stulnikau/.platformio/packages/framework-arduino-avr/libraries/EEPROM/src",
+                    "/Users/aliaksei.stulnikau/.platformio/packages/framework-arduino-avr/libraries/HID/src",
+                    "/Users/aliaksei.stulnikau/.platformio/packages/framework-arduino-avr/libraries/SPI/src",
+                    "/Users/aliaksei.stulnikau/.platformio/packages/framework-arduino-avr/libraries/SoftwareSerial/src",
+                    "/Users/aliaksei.stulnikau/.platformio/packages/tool-unity",
+                    ""
+                ]
+            },
+            "defines": [
+                "PLATFORMIO=50001",
+                "ARDUINO_AVR_MEGA2560",
+                "F_CPU=16000000L",
+                "ARDUINO_ARCH_AVR",
+                "ARDUINO=10808",
+                "__AVR_ATmega2560__",
+                ""
+            ],
+            "intelliSenseMode": "clang-x64",
+            "cStandard": "c11",
+            "cppStandard": "c++11",
+            "compilerPath": "/Users/aliaksei.stulnikau/.platformio/packages/toolchain-atmelavr/bin/avr-gcc",
+            "compilerArgs": [
+                "-mmcu=atmega2560",
+                ""
+            ]
+        }
+    ],
+    "version": 4
+}
